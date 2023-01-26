@@ -1,0 +1,429 @@
+﻿@page "/MisJornadas"
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+@using System.Windows
+@using System.Threading
+
+@implements IDisposable
+
+@inject ISettingsViewModel _settingsViewModel
+@inject IJornadaViewModel _jornadaViewModel
+@inject NavigationManager _navigationManager
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+@inject TooltipService _tooltipService
+
+<AuthorizeView>
+    <Authorized>
+        <h2><b>Mis Jornadas</b></h2>
+        <hr />
+    </Authorized>
+</AuthorizeView>
+@if (!Loaded)
+{
+    <div class="mt-4">
+        <div class="spinner"></div>
+    </div>
+}
+else
+{
+    <AuthorizeView>
+        <Authorized>
+            <div class="row">
+                <div class="col-lg-6 col-md-6">
+                    <div class="m-4">
+                        <div class="@TimeClass">@Time</div>
+                        <div class="col-md-12">
+                            <h6 class="text-center text-muted"> @_settingsViewModel.Localizacion?.Town @_settingsViewModel.Localizacion?.City </h6>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <h6 class="text-center text-muted"> Jornada de hoy</h6>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-6">
+                    <div class="my-auto">
+                        <div class="card rounded-slg">
+                            <div class="row">
+                                <div class="col-md-6 p-2 my-auto">
+                                    <div class="col-md-6 mx-auto">
+                                        <h6 class="text-muted my-auto">Hora entrada</h6>
+                                    </div>
+                                    <div class="col-md-6 mx-auto">
+                                        @if (@_jornadaViewModel.JornadaActual.Fichajes.LastOrDefault()?.HoraEntrada != null)
+                                        {
+                                            <h3 class="text-dark">@_jornadaViewModel.JornadaActual.Fichajes.LastOrDefault()?.HoraEntrada?.ToString("HH:mm 'h'")</h3>
+                                        }
+                                        else
+                                        {
+                                            <h3 class="text-lightdark">--:-- h</h3>
+                                        }
+
+                                    </div>
+                                </div>
+                                <div class="col-md-6 p-2 my-auto">
+                                    <div class="col-md-6 mx-auto">
+                                        <h6 class="text-muted my-auto">Hora salida</h6>
+                                    </div>
+                                    <div class="col-md-6 mx-auto">
+                                        @if (@_jornadaViewModel.JornadaActual.Fichajes.LastOrDefault()?.HoraSalida != null)
+                                        {
+                                            <h3 class="text-dark">@_jornadaViewModel.JornadaActual.Fichajes.LastOrDefault()?.HoraSalida?.ToString("HH:mm 'h'")</h3>
+                                        }
+                                        else
+                                        {
+                                            <h3 class="text-lightdark">--:-- h</h3>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (_jornadaViewModel.JornadaActual.Fichajes.LastOrDefault()?.HoraEntrada == null)
+                        {
+                            <div class="col-md-12 text-center mt-2">
+                                <RadzenButton Click=NuevoFichaje Text="Empezar" ButtonStyle="ButtonStyle.Secondary" class="shadow-sm" />
+                            </div>
+                        }
+                        else if (_jornadaViewModel.JornadaActual.Fichajes.LastOrDefault().HoraSalida == null)
+                        {
+                            <div class="col-md-12 text-center mt-2">
+                                <RadzenButton Click=FinalizaFichaje Text="Finalizar" ButtonStyle="ButtonStyle.Danger" class="shadow-sm" />
+                            </div>
+                        }
+                        else if (_jornadaViewModel.JornadaActual.Fichajes.LastOrDefault().HoraEntrada != null && _jornadaViewModel.JornadaActual.Fichajes.LastOrDefault().HoraSalida != null)
+                        {
+                            <div class="col-md-12 text-center mt-2">
+                                <RadzenButton Click=NuevoFichaje Text="Volver" ButtonStyle="ButtonStyle.Secondary" class="shadow-sm" />
+                            </div>
+                        }
+
+                    </div>
+                </div>
+            </div>
+            <h4><b>Últimas jornadas</b></h4>
+            <div class="row m-4">
+                <div class="col-lg-4 text-center font-weight-bold">
+                    <RadzenButton Click=@(args => LoadDays(false,true)) ButtonStyle="ButtonStyle.Light" Icon="keyboard_double_arrow_left" Class="text-left" />
+                    <RadzenButton Click=@(args => LoadDays(false)) ButtonStyle="ButtonStyle.Light" Icon="keyboard_arrow_left" Class="text-left" />
+
+                </div>
+                <div class="h4 col-lg-4 text-center font-weight-bold my-auto text-muted">
+                    <RadzenLabel Text=@StartDate.ToString("MMMM yyyy").ToUpper() Style="margin-left: 8px; margin-right: 8px; vertical-align: middle;" />
+                </div>
+                <div class="col-lg-4 text-center font-weight-bold">
+                    <RadzenButton Click=@(args => LoadDays(true)) ButtonStyle="ButtonStyle.Light" Icon="keyboard_arrow_right" />
+                    <RadzenButton Click=@(args => LoadDays(true,true)) ButtonStyle="ButtonStyle.Light" Icon="keyboard_double_arrow_right" />
+                </div>
+            </div>
+            <div class="bg-white rounded-slg">
+                <table class="table table-bordered shadow-sm" style=" border-radius: 1em; overflow: hidden;">
+                    <thead class="text-muted thead-light">
+                        <tr>
+                            @for (var dayIndex = 0; dayIndex < Days.Count(); dayIndex++)
+                            {
+                                if (Days[dayIndex].DayOfWeek == DayOfWeek.Saturday || Days[dayIndex].DayOfWeek == DayOfWeek.Sunday)
+                                {
+                                    <th class="col-lg-1 text-center">
+                                        @Days[dayIndex].ToString("ddd d")
+                                    </th>
+                                }
+                                else
+                                {
+                                    <th class="col-lg-1 text-center">
+                                        @Days[dayIndex].ToString("ddd d")
+                                    </th>
+                                }
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            @for (var dayIndex = 0; dayIndex < Days.Count(); dayIndex++)
+                            {
+                                bool existe = false;
+                                @foreach (var jornada in _jornadaViewModel.Jornadas)
+                                    {
+                                        if (jornada.FechaJornada.DayOfYear == Days[dayIndex].DayOfYear)
+                                        {
+                                        <td class="col-md-1 col-lg-1 my-auto text-center" @onclick="@(args => AbrirJornada(jornada))">
+
+                                            @foreach (var turno in jornada.Turnos)
+                                                {
+                                                <div class="p-0">
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@("TURNO \n" + turno.Turno.HoraComienzo?.ToString("HH:mm") + " - " + turno.Turno.HoraFin?.ToString("HH:mm"))" MouseEnter="@(args => ShowTooltipAusencia(args, "Turno"))" />
+                                                </div>
+                                                }
+
+                                            @foreach (var ausencia in jornada.Ausencias)
+                                                {
+                                                <div class="p-0">
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@(ausencia.Ausencia.TipoAusencia.NombreAusencia)" MouseEnter="@(args => ShowTooltipAusencia(args, ausencia.Ausencia.FechaComienzo?.ToString("HH:mm") + " hasta " + ausencia.Ausencia.FechaFin?.ToString("HH:mm")))" />
+                                                </div>
+                                                }
+
+                                            @{SetTiempoTotalDia();}
+
+                                            @foreach (var fichaje in jornada.Fichajes)
+                                            {
+                                                <div class="p-0 font-weight-bold">
+                                                    @(fichaje.HoraEntrada?.ToString("HH:mm"))
+                                                </div>
+                                                <div class="p-0 font-weight-bold">
+                                                    @(fichaje.HoraSalida?.ToString("HH:mm"))
+                                                </div>
+                                                if (fichaje.HoraSalida?.ToString() != null)
+                                                {
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text=@(GetDifferenceHours(fichaje)) />
+                                                }
+                                                <hr />
+                                            }
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Success" Text=@(GetTiempoTotalDia()) />
+                                        </td>
+                                        existe = true;
+                                    }
+                                }
+
+                                if (!existe)
+                                {
+                                    <td @onclick="@(args => AbrirJornada())"></td>
+                                }
+                            }
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </Authorized>
+        <NotAuthorized>
+            <h5>Debes iniciar sesión para acceder al contenido.</h5>
+        </NotAuthorized>
+    </AuthorizeView>
+}
+
+@code {
+
+    private bool Loaded { get; set; } = true;
+    private string Time { get; set; }
+    private string TimeClass { get; set; } = "display-4 mx-auto p-2 text-center font-weight-bold text-muted";
+    private Timer timer { get; set; }
+    private TimeSpan TiempoTotal { get; set; }
+    private TimeSpan? TiempoTotalDia { get; set; } = new TimeSpan();
+
+    List<DateTime> Days = new List<DateTime>();
+    DateTime StartDate = new();
+    DateTime EndDate = new();
+    int MonthIndex { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Loaded = Shared.Funciones.Spinner(true);
+        StartTimer();
+        StartDate = DateTime.Now;
+        StartDate = Shared.DateTimeExtensions.StartOfWeek(StartDate, DayOfWeek.Monday);
+        EndDate = StartDate.AddDays(6);
+
+        await _jornadaViewModel.GetMisFichajes(StartDate, EndDate);
+        GenerarCalendarioCabecera();
+
+        Loaded = Shared.Funciones.Spinner(false);
+
+        await GetLocalizacion();
+    }
+
+    /// <summary>
+    /// Empieza el temporizador de la hora
+    /// </summary>
+    private void StartTimer()
+    {
+        timer = new((_) =>
+        {
+            InvokeAsync(() =>
+            {
+                if (_jornadaViewModel.JornadaActual.Fichajes.LastOrDefault()?.HoraEntrada?.ToString() != null && _jornadaViewModel.JornadaActual.Fichajes.LastOrDefault().HoraSalida?.ToString() == null)
+                {
+                    TimeSpan? TiempoTotalHoy = (DateTime.Now - _jornadaViewModel.JornadaActual.Fichajes.LastOrDefault().HoraEntrada);
+                    TimeClass = "display-4 mx-auto p-2 text-center font-weight-bold text-warning";
+                    Time = String.Format("{0} h {1} m ", TiempoTotalHoy?.Hours, TiempoTotalHoy?.Minutes);
+                }
+                else if (_jornadaViewModel.JornadaActual.Fichajes.LastOrDefault()?.HoraSalida?.ToString() != null)
+                {
+                    TimeSpan? TiempoTotalHoy = (_jornadaViewModel.JornadaActual.Fichajes.LastOrDefault()?.HoraSalida - _jornadaViewModel.JornadaActual.Fichajes.LastOrDefault().HoraEntrada);
+                    TimeClass = "display-4 mx-auto p-2 text-center font-weight-bold text-muted";
+                    Time = String.Format("{0} h {1} m", TiempoTotalHoy?.Hours, TiempoTotalHoy?.Minutes);
+                }
+                else
+                {
+                    Time = "0 h 0 m";
+                }
+                StateHasChanged();
+            });
+        }, null, 0, 1000);
+    }
+
+    /// <summary>
+    /// Inicia el fichaje de hoy
+    /// </summary>
+    private void NuevoFichaje()
+    {
+        _settingsViewModel.GetLocalizacion();
+
+        Fichaje fichaje = new Fichaje()
+        {
+            LocalizacionEntrada = _settingsViewModel.Localizacion,
+            HoraEntrada = Shared.Funciones.GetDateTimeNow(),
+            FuenteEntrada = "PC"
+        };
+        _jornadaViewModel.JornadaActual.Fichajes.Add(fichaje);
+        _jornadaViewModel.NuevoFichaje();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Finaliza el fichaje de hoy
+    /// </summary>
+    private void FinalizaFichaje()
+    {
+        _settingsViewModel.GetLocalizacion();
+
+        Fichaje fichaje = _jornadaViewModel.JornadaActual.Fichajes.LastOrDefault();
+
+        if (fichaje.HoraSalida == null)
+        {
+            fichaje.HoraSalida = Shared.Funciones.GetDateTimeNow();
+            fichaje.LocalizacionSalida = _settingsViewModel.Localizacion;
+            fichaje.FuenteSalida = "PC";
+
+        }
+        _jornadaViewModel.FinalizaFichaje();
+    }
+
+    private bool AbrirJornada(Jornada jornada = null)
+    {
+        if (jornada != null)
+        {
+            Console.WriteLine("Fecha Jornada:" + jornada.FechaJornada);
+        }
+        else
+        {
+            Console.WriteLine("Fecha sdfgsdfgsdfg:");
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Carga los días
+    /// </summary>
+    /// <param name="MasMenos"></param>
+    private async Task LoadDays(bool MasMenos, bool Mes = false)
+    {
+        if (Mes)
+        {
+            if (MasMenos)
+            {
+                StartDate = StartDate.AddMonths(1);
+            }
+            else
+            {
+                StartDate = StartDate.AddMonths(-1);
+            }
+        }
+        else
+        {
+            if (MasMenos)
+            {
+                StartDate = StartDate.AddDays(7);
+            }
+            else
+            {
+                StartDate = StartDate.AddDays(-7);
+            }
+        }
+
+        StartDate = Shared.DateTimeExtensions.StartOfWeek(StartDate, DayOfWeek.Monday);
+        EndDate = StartDate.AddDays(6);
+        await _jornadaViewModel.GetMisFichajes(StartDate, EndDate);
+        GenerarCalendarioCabecera();
+    }
+
+    /// <summary>
+    /// Carga la cabecera del calendario
+    /// </summary>
+    private void GenerarCalendarioCabecera()
+    {
+        var Day1 = new List<DateTime>();
+        for (var dt = StartDate; dt <= EndDate; dt = dt.AddDays(1))
+        {
+            Day1.Add(dt);
+        }
+        Days = Day1.ToList();
+    }
+
+    /// <summary>
+    /// Se crea esta función para ver el mes completo
+    /// </summary>
+    private void GenerarCalendarioCuerpo()
+    {
+        int flag = 0;
+        List<Semana> Weeks = new List<Semana>();
+        Semana week = new Semana();
+        List<Jornada> dates = new List<Jornada>();
+        var totalDays = (int)(EndDate - StartDate).TotalDays;
+        var countDays = 0;
+
+        for (var dt = StartDate; dt <= EndDate; dt = dt.AddDays(1))
+        {
+            flag++;
+            if (flag == 7)
+            {
+                week = new Semana();
+                week.Fechas = dates;
+                Weeks.Add(week);
+
+                dates = new List<Jornada>();
+                flag = 0;
+            }
+
+            if (countDays == totalDays)
+            {
+                week = new Semana();
+                week.Fechas = dates;
+                Weeks.Add(week);
+                break;
+            }
+            countDays++;
+        }
+    }
+
+    private string GetDifferenceHours(Fichaje fichaje)
+    {
+        TimeSpan? timeSpan = fichaje.HoraSalida - fichaje.HoraEntrada;
+        TiempoTotalDia += timeSpan;
+        return String.Format("{0}h {1}m", timeSpan.Value.Hours, timeSpan.Value.Minutes);
+    }
+
+    private string GetTiempoTotalDia()
+    {
+        return String.Format("{0}h {1}m", TiempoTotalDia.Value.Hours, TiempoTotalDia.Value.Minutes);
+    }
+
+    void SetTiempoTotalDia()
+    {
+        TiempoTotalDia = TimeSpan.Zero;
+    }
+
+    void ShowTooltipAusencia(ElementReference elementReference, string message, TooltipOptions options = null) => _tooltipService.Open(elementReference, message, options);
+
+    private async Task GetLocalizacion()
+    {
+        await _settingsViewModel.GetLocalizacion();
+    }
+
+    public void Dispose()
+    {
+        if (timer != null)
+            timer.Dispose();
+    }
+}
+

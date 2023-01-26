@@ -1,0 +1,878 @@
+@page "/Tickets/{ticketId}"
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+@using System.Net
+
+@inject ISettingsViewModel _settingsViewModel
+@inject ITicketViewModel _ticketViewModel
+@inject ITipoTicketViewModel _tipoTicketViewModel
+@inject IUsuariosViewModel _usuariosViewModel
+@inject ISingleTicketViewModel _singleTicketViewModel
+@inject ISuplementoViewModel _suplementoViewModel
+@inject IZonaTicketViewModel _zonaTicketViewModel
+@inject IDepartamentoViewModel _departamentoViewModel
+@inject IZonaViewModel _zonaViewModel
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+@inject DialogService _dialogService
+@inject NavigationManager _navigationManager
+@inject IMainViewModel _mainViewModel
+
+
+@if (ticketId == "0")
+{
+    <h2><b>Nuevo Ticket</b></h2>
+    <hr />
+}
+else
+{
+    <h2><b>Editar Ticket</b></h2>
+    <hr />
+}
+
+@if (_singleTicketViewModel.TicketId.ToString() == ticketId)
+{
+<div class="row">
+    <div class="col-md-6 col-lg-4">
+        @if (_singleTicketViewModel.Estado != null)
+        {
+            @if (_singleTicketViewModel.Estado.Equals("Solucionado"))
+            {
+                <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="@_singleTicketViewModel.Estado" />
+            }
+            else if (_singleTicketViewModel.Estado.Equals("En progreso"))
+            {
+                <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Text="@_singleTicketViewModel.Estado" />
+            }
+            else if (_singleTicketViewModel.Estado.Equals("Activo"))
+            {
+                <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Text="@_singleTicketViewModel.Estado" />
+            }
+            else if (_singleTicketViewModel.Estado.Equals("Visto"))
+            {
+                <RadzenBadge BadgeStyle="BadgeStyle.Light" IsPill="true" Text="@_singleTicketViewModel.Estado" />
+            }
+
+            @if (_singleTicketViewModel.Gravedad.Equals("Crítico"))
+            {
+                <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Text="@_singleTicketViewModel.Gravedad" />
+            }
+            else if (_singleTicketViewModel.Gravedad.Equals("Grave"))
+            {
+                <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Text="@_singleTicketViewModel.Gravedad" />
+            }
+            else if (_singleTicketViewModel.Gravedad.Equals("Leve"))
+            {
+                <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="@_singleTicketViewModel.Gravedad" />
+            }
+        }
+    </div>
+    <div class="col-lg-4">
+    </div>
+    @if (_singleTicketViewModel.TicketId.ToString() != "0")
+    {
+        <div class="col-md-6 col-lg-4 text-right">
+            <div class="row d-flex mx-auto">
+                <div class="col-md-4 col-lg-2">
+                    <RadzenButton Class="mx-2" Click=@(args => SolucionarTicket(_singleTicketViewModel.TicketId)) Icon="check_circle" ButtonStyle="ButtonStyle.Success" />
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <RadzenButton Class="mx-2" Click=@(args => ActivarTicket(_singleTicketViewModel.TicketId)) Icon="report" ButtonStyle="ButtonStyle.Danger" />
+                </div>
+                <AuthorizeView Policy=@("EsAdministrador" + _singleTicketViewModel.Area)>
+                    <ChildContent Context="Administrador">
+                        <div class="col-md-4 col-lg-2">
+                            <RadzenButton Class="mx-2" Click=@(args => PendienteTicket(_singleTicketViewModel.TicketId)) Icon="support_agent" ButtonStyle="ButtonStyle.Warning" />
+                        </div>
+                        <div class="col-md-4 col-lg-2">
+                            <RadzenButton Class="mx-2" Click=@(args => VistoTicket(_singleTicketViewModel.TicketId)) Icon="visibility" ButtonStyle="ButtonStyle.Secondary" />
+                        </div>
+                    </ChildContent>
+                </AuthorizeView>
+            </div>
+        </div>
+    }
+</div>
+}
+
+@if (_singleTicketViewModel.TicketId.ToString() != ticketId && ticketId != "0")
+{
+    <div class="spinner mt-4"></div>
+}
+else
+{
+    <AuthorizeView>
+        <Authorized>
+            <div class="col-11">
+                <EditForm Model="_singleTicketViewModel" OnValidSubmit="@AccionTicket">
+                    <ChildContent Context="crear">
+                        <div class="form-group row">
+                            <label class="col-md-6 col-form-label">Fecha de creación</label>
+                            <label class="col-md-6 col-form-label">@_singleTicketViewModel.FechaCreado</label>
+                            <label class="col-md-12 col-form-label">Título del problema</label>
+                            <div class="col-md-6">
+                                <RadzenTextBox @bind-Value="_singleTicketViewModel.Titulo" Class="w-100" Disabled="CampoNoEditable" Placeholder="Título del ticket" />
+                            </div>
+                            <div class="col-md-3">
+                                <RadzenDropDown @bind-Value="_singleTicketViewModel.Area" Change="CambiarMostrarCampos" TValue="string" Data="OpcionesArea" Placeholder="Selecciona área" Disabled="CampoNoEditable"></RadzenDropDown>
+                            </div>
+                            <div class="col-md-2 row m-2">
+                                <RadzenCheckBox @bind-Value="_singleTicketViewModel.Publico" Name="CheckPublico" TValue="bool" Disabled="CampoNoEditable" />
+                                <RadzenLabel Text="Público" Component="CheckPublico" Style="margin-left: 8px; vertical-align: middle;" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label">Gravedad</label>
+                            <label class="col-md-4 col-form-label">Teléfono de contacto</label>
+                            <label class="col-md-4 col-form-label">Email de contacto</label>
+                            <div class="col-md-4">
+                                <RadzenDropDown @bind-Value="_singleTicketViewModel.Gravedad" TValue="string" Data="OpcionesGravedad" Disabled="CampoNoEditable" Placeholder="Selecciona gravedad"></RadzenDropDown>
+                            </div>
+                            <div class="col-md-4">
+                                <RadzenTextBox @bind-Value="_singleTicketViewModel.TelefonoContacto" Class="w-100" Disabled="CampoNoEditable" />
+                            </div>
+                            <div class="col-md-4">
+                                <RadzenTextBox @bind-Value="_singleTicketViewModel.EmailContacto" Class="w-100" Disabled="CampoNoEditable" />
+                            </div>
+                        </div>
+                        @if (MostrarControlRemoto)
+                        {
+                            <div class="bg-white p-2 my-4 shadow-sm rounded-slg border">
+                                <h4 class="m-2"><b>Control Remoto</b></h4>
+                                <div class="form-group row m-2">
+                                    <label class="col-md-4 col-form-label">Aplicación</label>
+                                    <label class="col-md-4 col-form-label">ID o Usuario</label>
+                                    <label class="col-md-4 col-form-label">Contraseña (Sólo TeamViewer)</label>
+                                    <div class="col-md-4">
+                                        <RadzenDropDown @bind-Value="_singleTicketViewModel.RemotoApp" TValue="string" Data="OpcionesAppRemoto" Placeholder="Selecciona aplicación"></RadzenDropDown>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <RadzenTextBox @bind-Value="_singleTicketViewModel.RemotoID" Class="w-100" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <RadzenTextBox @bind-Value="_singleTicketViewModel.RemotoContrasena" Class="w-100" />
+                                    </div>
+                                    <label class="col-md-12 col-form-label text-muted text-right">Si se rellenan estos datos, por favor, deje el ordenador encendido con la aplicación indicada abierta.</label>
+                                    <label class="col-md-12 col-form-label text-muted text-right">Para configurar Escritorio remoto de Chrome acceda al apartado de "Compartir esta pantalla" en <a href="https://remotedesktop.google.com/support" target="_blank">este enlace</a> y siga los pasos.</label>
+                                </div>
+                            </div>
+                        }
+
+                        @if (MostrarTipoTicket)
+                        {
+                            <div class="bg-white p-2 my-4 shadow-sm rounded-slg border">
+                                <h4 class="m-2"><b>Área de Mantenimiento</b></h4>
+                                <div class="form-group row m-2">
+                                    <label class="col-md-4 col-form-label">Tipo de ticket</label>
+                                    <div class="col-md-4">
+                                        <RadzenDropDown @bind-Value="_singleTicketViewModel.TipoTicket" TValue="string" Data="OpcionesTipoTicket" Placeholder="Selecciona el tipo"></RadzenDropDown>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        <div class="form-group row">
+                            <AuthorizeView Policy="EsAdministrador">
+                                <ChildContent Context="CreadoPorLabel">
+                                    <label class="col-md-6 col-form-label">Creado por</label>
+                                </ChildContent>
+                            </AuthorizeView>
+                            <label class="col-md-6 col-form-label">Asignado a</label>
+                            <AuthorizeView Policy="EsAdministrador">
+                                <ChildContent Context="CreadoPor">
+                                    <div class="col-md-6">
+                                        <div class="col-md-10">
+                                            <RadzenDropDown AllowClear="true" TValue="string" Class="w-100"
+                                                            AllowFiltering="true" Data=@OpcionesUsuarios @bind-Value="_singleTicketViewModel.CreadoPor" TextProperty="NombreCompleto" ValueProperty="UsuarioId" Disabled="CampoNoEditable" />
+                                        </div>
+                                    </div>
+                                </ChildContent>
+                            </AuthorizeView>
+                            <div class="col-md-6">
+                                <div class="col-md-10">
+                                    <RadzenDropDown AllowClear="true" TValue="string" Class="w-100"
+                                                    AllowFiltering="true" Data=@OpcionesUsuariosAsignadoA @bind-Value="_singleTicketViewModel.AsignadoA" TextProperty="NombreCompleto" ValueProperty="UsuarioId" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <div class="col-md-12 col-lg-12 my-2">
+                                <div class="bg-white my-4 p-2 shadow-sm rounded-slg border">
+                                    <h4 class="m-2"><b>Ubicaciones</b></h4>
+                                    <div class="col-md-12 row m-4">
+                                        <RadzenCheckBox @bind-Value=@Residente Name="CheckResidente" TValue="bool" Change=@CambiarResidente />
+                                        <RadzenLabel Text="Residente" Component="CheckResidente" Style="margin-left: 8px; vertical-align: middle;" />
+                                    </div>
+                                    <RadzenDataList Class="m-2 p-2 col-md-12 col-lg-12" WrapItems="true" AllowPaging="true" Data="@_singleTicketViewModel.Zonas" TItem="ZonaTicket" PageSize="10" PagerHorizontalAlign="HorizontalAlign.Left">
+                                        <Template Context="Zona">
+                                            <p class="text-dark col-md-10 col-lg-10 text-left"><b>@(Zona.Nombre)</b> - @(Zona.Situacion) - <span class="text-lightdark">@(Zona.Observaciones != null ? Zona.Observaciones : null)</span></p>
+                                            <RadzenButton Class="m-1" ButtonStyle="ButtonStyle.Secondary" Icon="edit" Click=@(args => ModificarZonaTicket(Zona)) />
+                                            <RadzenButton Class="m-1" ButtonStyle="ButtonStyle.Danger" Icon="delete" Click=@(args => SeguroEliminarZonaTicket(Zona)) />
+                                        </Template>
+                                    </RadzenDataList>
+                                    <div class="mx-5 mb-4 text-left">
+                                        <RadzenButton ButtonStyle="ButtonStyle.Warning" Text="Añadir ubicación" Click="NuevaZonaTicket" Style="width: 200px" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <label class="col-md-12 col-lg-12 col-form-label">Descripción</label>
+                            <div class="col-md-12 col-lg-12">
+                                <RadzenTextArea @bind-Value="_singleTicketViewModel.Observaciones" Cols="100" Rows="10" Class="w-100" Placeholder="Describa el problema con el máximo detalle" />
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <div class="custom-file col-md-6">
+                                <InputFile class="custom-file-input" multiple OnChange="SubirImagen" accept="image/png, image/jpeg, image/gif" id="inputFile" />
+                                <label class="custom-file-label" for="inputFile">Subir imagen</label>
+                            </div>
+                            <div class="col-md-2 m-2">
+                                @if (_singleTicketViewModel.Imagen != null)
+                                {
+                                    <img class="rounded" src="data:image/png;base64,@_singleTicketViewModel.Imagen" />
+                                }
+                            </div>
+                        </div>
+                        @if (ticketId.ToString() != "0")
+                        {
+                            @if (_singleTicketViewModel.Estados != null)
+                            {
+                                <div class="bg-white my-4 card p-2 shadow-sm rounded-slg border">
+                                    <h4 class="m-2"><b>Historial de estados</b></h4>
+                                    <RadzenDataList Class="m-2 p-2" WrapItems="true" AllowPaging="true" Data="@_singleTicketViewModel.Estados" TItem="EstadoTicket" PageSize="10" PagerHorizontalAlign="HorizontalAlign.Left">
+                                        <Template Context="Estado">
+                                            <p class="text-dark col-md-12 col-lg-12">@(Estado.FechaEstado.ToString("dd MMMM yyyy, HH:mm")) - <b>@(Estado.Estado)</b>@(Estado.Observaciones) por <b>@(Estado.EstadoPorNombreCompleto)</b></p>
+                                        </Template>
+                                    </RadzenDataList>
+                                </div>
+                            }
+
+                            <div class="bg-light my-4 p-2 shadow-sm rounded-slg border">
+                                <h4 class="m-2"><b>Comentarios</b></h4>
+                                <RadzenDataList Class="m-2 p-2" WrapItems="true" AllowPaging="true" Data="@_singleTicketViewModel.Suplementos" TItem="SuplementoTicket" PageSize="10" PagerHorizontalAlign="HorizontalAlign.Left">
+                                    <Template Context="Suplemento">
+                                        <RadzenCard Class="shadow-sm m-2 rounded-slg">
+                                            <div>
+                                                <div class="row">
+                                                    <div class="col-lg-4 m-2 text-left">
+                                                        <p class="mb-0 text-lightdark">@(Suplemento.FechaCreacion.ToString("dd MMMM yyyy, HH:mm"))</p>
+                                                    </div>
+                                                    <div class="col-lg-7 m-2 text-right">
+                                                        <p class="text-lightdark">@(Suplemento.CreadoPorNombreCompleto)</p>
+                                                    </div>
+                                                    <div class="col-lg-10 mx-auto mx-3 my-2">
+                                                        <p>@(Suplemento.Comentario)</p>
+                                                    </div>
+
+                                                    @if (Suplemento.Imagen != null)
+                                                    {
+                                                        <div class="col-lg-3 m-2">
+                                                            <img class="rounded-slg" src="data:image/png;base64,@(Suplemento.Imagen)" />
+                                                        </div>
+                                                    }
+                                                </div>
+
+                                                @if (Suplemento.CreadoPor == _mainViewModel.UsuarioId.ToString())
+                                                {
+                                                    <div class="mx-3 mb-2 text-right">
+                                                        <RadzenButton Class="m-1" ButtonStyle="ButtonStyle.Secondary" Icon="edit" Click=@(args => ModificarSuplemento(Suplemento)) />
+                                                        <RadzenButton Class="m-1" ButtonStyle="ButtonStyle.Danger" Icon="delete" Click=@(args => SeguroEliminarSuplemento(Suplemento)) />
+                                                    </div>
+                                                }
+                                            </div>
+                                        </RadzenCard>
+                                    </Template>
+                                </RadzenDataList>
+                                <div class="mx-5 mb-4 text-left">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Warning" Text="Añadir comentario" Click="NuevoSuplemento" Style="width: 200px" />
+                                </div>
+                            </div>
+                        }
+                        <div class="row m-4">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+                        </div>
+                        <div class="row m-4">
+                            @if (ticketId.ToString() == "0")
+                            {
+                                <div class="col-md-6 text-left mt-4">
+                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Crear" Style="width: 120px" />
+                                    <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text="Volver" Click="Volver" Style="width: 120px" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-8 text-left">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Success" Text="Modificar y Solucionar" Click="ActualizarYSolucionarTicket" Style="width: 200px" />
+                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Modificar" Style="width: 120px" />
+                                    <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text="Volver" Click="Volver" Style="width: 120px" />
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <RadzenButton Text="Eliminar" ButtonStyle="ButtonStyle.Danger" Click=@SeguroEliminarTicket Style="width: 120px" />
+                                </div>
+                            }
+                        </div>
+                    </ChildContent>
+                </EditForm>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <h5>Debes iniciar sesión para acceder al contenido.</h5>
+        </NotAuthorized>
+    </AuthorizeView>
+}
+
+@code {
+
+    [Parameter]
+    public string ticketId { get; set; }
+
+    List<object> OpcionesGravedad = new List<object>();
+    List<object> OpcionesAppRemoto = new List<object>();
+    List<object> OpcionesArea = new List<object>();
+    List<object> OpcionesUsuarios = new List<object>();
+    List<object> OpcionesUsuariosAsignadoA = new List<object>();
+    List<object> OpcionesTipoTicket = new List<object>();
+
+    public bool MostrarControlRemoto { get; set; } = false;
+    public bool CampoNoEditable { get; set; } = true;
+    public bool MostrarTipoTicket { get; set; } = false;
+    public bool Residente { get; set; } = false;
+
+    private HttpResponseMessage response;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ticketId == "0" || _mainViewModel.Rol == "Administrador" || _mainViewModel.Rol == "SuperAdministrador" || _mainViewModel.UsuarioId.ToString() == _singleTicketViewModel.CreadoPor)
+        {
+            CampoNoEditable = false;
+        }
+
+        _settingsViewModel.EstadoNavegacion = "SingleTicket";
+
+        if (ticketId.ToString() != "0")
+        {
+            response = await _singleTicketViewModel.GetTicket(Convert.ToInt64(ticketId));
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                _singleTicketViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+                _singleTicketViewModel.Mensaje = "Ticket cargado correctamente.";
+            }
+            else
+            {
+                _singleTicketViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+                _singleTicketViewModel.Mensaje = "Ha habido un error al recuperar el ticket.";
+                _navigationManager.NavigateTo($"Tickets");
+            }
+            _messageService.ShowNotification(_notificationService, _singleTicketViewModel.Mensaje, _singleTicketViewModel.NotificacionSeveridad);
+        }
+        else
+        {
+            _singleTicketViewModel.Anular();
+            _singleTicketViewModel.TelefonoContacto = _mainViewModel.Telefono;
+            _singleTicketViewModel.EmailContacto = _mainViewModel.Email;
+        }
+
+        OpcionesGravedad.Add("Leve");
+        OpcionesGravedad.Add("Grave");
+        OpcionesGravedad.Add("Crítico");
+        OpcionesAppRemoto.Add("Escritorio remoto de Chrome");
+        OpcionesAppRemoto.Add("Teamviewer");
+        OpcionesAppRemoto.Add("AnyDesk");
+
+        await _departamentoViewModel.GetDepartamentos();
+        await _tipoTicketViewModel.GetTiposTicket();
+        await _usuariosViewModel.GetUsuarios();
+
+        OpcionesUsuarios.AddRange(_usuariosViewModel.Usuarios
+            .Select(u => new { NombreCompleto = u.Nombre + " " + u.Apellidos, UsuarioId = u.UsuarioId.ToString() })
+            .ToList());
+
+        OpcionesUsuariosAsignadoA.AddRange(_usuariosViewModel.Usuarios
+            .Where(u => u.DepartamentoNombre == _singleTicketViewModel.Area)
+            .Select(u => new { NombreCompleto = u.Nombre + " " + u.Apellidos, UsuarioId = u.UsuarioId.ToString() })
+            .ToList());
+
+        OpcionesArea.AddRange(_departamentoViewModel.Departamentos
+            .Where(d => d.TieneTickets == true)
+            .Select(d => d.Nombre).ToList());
+
+        OpcionesTipoTicket.AddRange(_tipoTicketViewModel.TiposTicket
+            .Select(z => z.Nombre).ToList());
+
+        if (_singleTicketViewModel.Area == "Informática")
+        {
+            MostrarControlRemoto = true;
+        }
+
+        if (_singleTicketViewModel.Area == "Mantenimiento")
+        {
+            MostrarTipoTicket = true;
+        }
+    }
+
+    /// <summary>
+    /// Si es de informática, se muestra la plantilla de control remoto. Si es de mantenimiento, se muestra el tipo de ticket.
+    /// </summary>
+    public void CambiarMostrarCampos()
+    {
+        if (_singleTicketViewModel.Area == "Informática")
+        {
+            MostrarControlRemoto = true;
+        }
+        else
+        {
+            MostrarControlRemoto = false;
+        }
+
+        if (_singleTicketViewModel.Area == "Mantenimiento")
+        {
+            MostrarTipoTicket = true;
+        }
+        else
+        {
+            MostrarTipoTicket = false;
+        }
+
+        OpcionesUsuariosAsignadoA.Clear();
+        OpcionesUsuariosAsignadoA.AddRange(_usuariosViewModel.Usuarios
+            .Where(u => u.DepartamentoNombre == _singleTicketViewModel.Area)
+            .Select(u => new { NombreCompleto = u.Nombre + " " + u.Apellidos, UsuarioId = u.UsuarioId.ToString() })
+            .ToList());
+    }
+
+    /// <summary>
+    /// Si Residente, se muestran los apartamentos, si !Residente, no.
+    /// </summary>
+    public void CambiarResidente()
+    {
+
+    }
+
+    /// <summary>
+    /// Dialog para añadir nuevo suplemento
+    /// </summary>
+    /// <returns></returns>
+    public async Task NuevoSuplemento()
+    {
+        _suplementoViewModel.Anular();
+        SuplementoTicket suplementoTicket = new();
+        await _dialogService.OpenAsync<Suplemento>("Nuevo Comentario",
+        new Dictionary<string, object>() { { "SuplementoTicket", suplementoTicket } },
+        new DialogOptions() { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+    }
+
+    /// <summary>
+    /// Dialog para añadir nueva zona
+    /// </summary>
+    /// <returns></returns>
+    public async Task NuevaZonaTicket()
+    {
+        _zonaTicketViewModel.Anular();
+        ZonaTicket zonaTicket = new();
+        await _dialogService.OpenAsync<Ubicacion>("Nueva ubicación",
+        new Dictionary<string, object>() { { "ZonaTicket", zonaTicket }, { "Residente", Residente } },
+        new DialogOptions() { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+    }
+
+    public void NuevoEstado(string estado)
+    {
+        EstadoTicket estadoTicket = new();
+        estadoTicket.Estado = estado;
+        estadoTicket.EstadoPor = _mainViewModel.UsuarioId.ToString();
+        estadoTicket.EstadoPorNombreCompleto = _mainViewModel.Nombre + " " + _mainViewModel.Apellidos;
+        estadoTicket.FechaEstado = DateTime.Now;
+        estadoTicket.TicketId = _singleTicketViewModel.TicketId;
+        _singleTicketViewModel.NuevoEstado(estadoTicket);
+    }
+
+    /// <summary>
+    /// Añadir estado y a quién se le añade.
+    /// </summary>
+    /// <param name="estado"></param>
+    /// <param name="a"></param>
+    public void NuevoEstado(string estado, string a)
+    {
+        EstadoTicket estadoTicket = new();
+        estadoTicket.Estado = estado;
+        estadoTicket.EstadoPor = _mainViewModel.UsuarioId.ToString();
+        estadoTicket.EstadoPorNombreCompleto = _mainViewModel.Nombre + " " + _mainViewModel.Apellidos;
+        estadoTicket.FechaEstado = DateTime.Now;
+        estadoTicket.Observaciones = " a " + a;
+        estadoTicket.TicketId = _singleTicketViewModel.TicketId;
+        _singleTicketViewModel.NuevoEstado(estadoTicket);
+    }
+
+    public async Task ModificarSuplemento(SuplementoTicket suplementoTicket)
+    {
+        await _dialogService.OpenAsync<Suplemento>("Modificar Comentario",
+            new Dictionary<string, object>() { { "SuplementoTicket", suplementoTicket } },
+            new DialogOptions() { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+    }
+
+    public async Task ModificarZonaTicket(ZonaTicket zonaTicket)
+    {
+        await _dialogService.OpenAsync<Ubicacion>("Modificar ubicación",
+            new Dictionary<string, object>() { { "ZonaTicket", zonaTicket }, { "Residente", Residente } },
+            new DialogOptions() { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+    }
+
+    /// <summary>
+    /// Pregunta si se quiere eliminar el comentario
+    /// </summary>
+    /// <param name="suplementoTicket"></param>
+    /// <returns></returns>
+    protected async Task SeguroEliminarSuplemento(SuplementoTicket suplementoTicket)
+    {
+        var result = await _dialogService.OpenAsync("Eliminar Comentario", ds =>
+    @<div>
+        <p class="mb-4">¿Estás seguro de eliminar el comentario?</p>
+        <div class="row">
+            <div class="col">
+                <RadzenButton Text="Eliminar" ButtonStyle="ButtonStyle.Danger" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;" />
+                <RadzenButton Text="Cancelar" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1" />
+            </div>
+        </div>
+    </div>);
+
+if (result)
+{
+  EliminarSuplemento(suplementoTicket);
+}
+}
+
+protected void EliminarSuplemento(SuplementoTicket suplementoTicket)
+{
+_singleTicketViewModel.Suplementos.Remove(suplementoTicket);
+_suplementoViewModel.Anular();
+}
+
+/// <summary>
+/// Pregunta si se quiere eliminar la ubicacion
+/// </summary>
+/// <param name="zonaTicket"></param>
+/// <returns></returns>
+protected async Task SeguroEliminarZonaTicket(ZonaTicket zonaTicket)
+{
+var result = await _dialogService.OpenAsync("Eliminar ubicación", ds =>
+@<div>
+    <p class="mb-4">¿Estás seguro de eliminar la ubicación?</p>
+    <div class="row">
+        <div class="col">
+            <RadzenButton Text="Eliminar" ButtonStyle="ButtonStyle.Danger" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;" />
+            <RadzenButton Text="Cancelar" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1" />
+        </div>
+    </div>
+</div>);
+
+if (result)
+{
+EliminarZonaTicket(zonaTicket);
+}
+}
+
+protected void EliminarZonaTicket(ZonaTicket zonaTicket)
+{
+_singleTicketViewModel.Zonas.Remove(zonaTicket);
+}
+
+/// <summary>
+/// Según de donde venga, se abre como nuevo o se carga un ticket para editar.
+/// </summary>
+/// <returns></returns>
+protected async Task AccionTicket()
+{
+if (ticketId.ToString() == "0")
+{
+await NuevoTicket();
+}
+else
+{
+await ActualizarTicket();
+}
+}
+
+/// <summary>
+/// Crea nuevo Ticket
+/// </summary>
+/// <returns></returns>
+protected async Task NuevoTicket()
+{
+    if (_singleTicketViewModel.CreadoPor == null)
+    {
+        _singleTicketViewModel.CreadoPor = _mainViewModel.UsuarioId.ToString();
+        _singleTicketViewModel.CreadoPorNombreCompleto = _mainViewModel.Nombre + " " + _mainViewModel.Apellidos;
+    }
+    else
+    {
+        await _singleTicketViewModel.SetNombreCompletoUsuarioPorDNICreadoPor(_singleTicketViewModel.CreadoPor);
+    }
+
+    if (_singleTicketViewModel.AsignadoANombreCompleto == null && _singleTicketViewModel.AsignadoA != null)
+    {
+        await _singleTicketViewModel.SetNombreCompletoUsuarioPorDNIAsignadoA(_singleTicketViewModel.AsignadoA);
+    }
+
+    _singleTicketViewModel.EmailContacto = _mainViewModel.Email;
+    _singleTicketViewModel.Estado = "Activo";
+    response = await _singleTicketViewModel.NuevoTicket();
+
+    if (response.StatusCode == HttpStatusCode.OK)
+    {
+        _singleTicketViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+        _singleTicketViewModel.Mensaje = "Ticket añadido correctamente.";
+        ticketId = _singleTicketViewModel.TicketId.ToString();
+    }
+    else
+    {
+        _singleTicketViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+        _singleTicketViewModel.Mensaje = "Ha habido un error al crear el ticket.";
+    }
+_messageService.ShowNotification(_notificationService, _singleTicketViewModel.Mensaje, _singleTicketViewModel.NotificacionSeveridad);
+}
+
+/// <summary>
+/// Actualiza el ticket actual
+/// </summary>
+/// <returns></returns>
+protected async Task ActualizarTicket()
+{
+if (_singleTicketViewModel.CreadoPor == null)
+{
+_singleTicketViewModel.CreadoPor = _mainViewModel.UsuarioId.ToString();
+_singleTicketViewModel.CreadoPorNombreCompleto = _mainViewModel.Nombre + " " + _mainViewModel.Apellidos;
+}
+else
+{
+if (_singleTicketViewModel.CreadoPor != _mainViewModel.UsuarioId.ToString())
+{
+  await _singleTicketViewModel.SetNombreCompletoUsuarioPorDNICreadoPor(_singleTicketViewModel.CreadoPor);
+}
+else
+{
+  _singleTicketViewModel.CreadoPorNombreCompleto = _mainViewModel.Nombre + " " + _mainViewModel.Apellidos;
+}
+}
+
+string NombreCompletoAsignadoAntiguo = _singleTicketViewModel.AsignadoANombreCompleto;
+
+await _singleTicketViewModel.SetNombreCompletoUsuarioPorDNIAsignadoA(_singleTicketViewModel.AsignadoA);
+
+if (NombreCompletoAsignadoAntiguo != _singleTicketViewModel.AsignadoANombreCompleto)
+{
+NuevoEstado("Asignado", _singleTicketViewModel.AsignadoANombreCompleto);
+}
+
+response = await _singleTicketViewModel.ActualizarTicket();
+
+if (response.StatusCode == HttpStatusCode.OK)
+{
+_singleTicketViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+_singleTicketViewModel.Mensaje = "Ticket modificado correctamente.";
+_navigationManager.NavigateTo($"Tickets");
+}
+else
+{
+_singleTicketViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+_singleTicketViewModel.Mensaje = "Ha habido un error al modificar el ticket.";
+}
+_messageService.ShowNotification(_notificationService, _singleTicketViewModel.Mensaje, _singleTicketViewModel.NotificacionSeveridad);
+}
+
+/// <summary>
+/// Actualiza el ticket actual y cambia su estado a solucionado.
+/// </summary>
+/// <returns></returns>
+protected async Task ActualizarYSolucionarTicket()
+{
+if (_singleTicketViewModel.CreadoPor == null)
+{
+_singleTicketViewModel.CreadoPor = _mainViewModel.UsuarioId.ToString();
+_singleTicketViewModel.CreadoPorNombreCompleto = _mainViewModel.Nombre + " " + _mainViewModel.Apellidos;
+}
+else
+{
+if (_singleTicketViewModel.CreadoPor != _mainViewModel.UsuarioId.ToString())
+{
+  await _singleTicketViewModel.SetNombreCompletoUsuarioPorDNICreadoPor(_singleTicketViewModel.CreadoPor);
+}
+else
+{
+  _singleTicketViewModel.CreadoPorNombreCompleto = _mainViewModel.Nombre + " " + _mainViewModel.Apellidos;
+}
+}
+
+string NombreCompletoAsignadoAntiguo = _singleTicketViewModel.AsignadoANombreCompleto;
+
+await _singleTicketViewModel.SetNombreCompletoUsuarioPorDNIAsignadoA(_singleTicketViewModel.AsignadoA);
+
+if (NombreCompletoAsignadoAntiguo != _singleTicketViewModel.AsignadoANombreCompleto)
+{
+NuevoEstado("Asignado", _singleTicketViewModel.AsignadoANombreCompleto);
+}
+
+response = await _singleTicketViewModel.ActualizarYSolucionarTicket();
+
+if (response.StatusCode == System.Net.HttpStatusCode.OK)
+{
+_singleTicketViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+_singleTicketViewModel.Mensaje = "Ticket modificado correctamente y cambiado a solucionado.";
+_navigationManager.NavigateTo($"Tickets");
+}
+else
+{
+_singleTicketViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+_singleTicketViewModel.Mensaje = "Ha habido un error al modificar el ticket.";
+}
+_messageService.ShowNotification(_notificationService, _singleTicketViewModel.Mensaje, _singleTicketViewModel.NotificacionSeveridad);
+}
+
+/// <summary>
+/// Elimina Ticket
+/// </summary>
+/// <returns></returns>
+protected async Task EliminarTicket()
+{
+response = await _singleTicketViewModel.EliminarTicket();
+
+if (response.StatusCode == HttpStatusCode.OK)
+{
+_singleTicketViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+_singleTicketViewModel.Mensaje = "Ticket eliminado correctamente.";
+_singleTicketViewModel.Anular();
+_navigationManager.NavigateTo($"Tickets");
+}
+else
+{
+_singleTicketViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+_singleTicketViewModel.Mensaje = "Ha habido un error al eliminar el ticket.";
+}
+_messageService.ShowNotification(_notificationService, _singleTicketViewModel.Mensaje, _singleTicketViewModel.NotificacionSeveridad);
+}
+
+/// <summary>
+/// Pregunta si está seguro de eliminar ticket
+/// </summary>
+/// <returns></returns>
+protected async Task SeguroEliminarTicket()
+{
+var result = await _dialogService.OpenAsync("Eliminar ticket", ds =>
+@<div>
+    <p class="mb-4">¿Estás seguro de eliminar el ticket?</p>
+    <div class="row">
+        <div class="col">
+            <RadzenButton Text="Eliminar" ButtonStyle="ButtonStyle.Danger" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;" />
+            <RadzenButton Text="Cancelar" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1" />
+        </div>
+    </div>
+</div>);
+
+if (result)
+{
+  await EliminarTicket();
+}
+}
+
+/// <summary>
+/// Vuelve a la lista de tickets
+/// </summary>
+protected void Volver()
+{
+_singleTicketViewModel.Anular();
+
+_navigationManager.NavigateTo($"Tickets");
+}
+
+/// <summary>
+/// Respuestas en los cambios de estado
+/// </summary>
+/// <param name="estado"></param>
+/// <returns></returns>
+private void RespuestasChangeStateTickets(string estado)
+{
+if (response.StatusCode != HttpStatusCode.OK)
+{
+  _ticketViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+  _ticketViewModel.Mensaje = "Ha habido un error al recuperar los tickets.";
+}
+else
+{
+  _ticketViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+  _ticketViewModel.Mensaje = "Se ha actualizado el ticket a " + estado + ".";
+}
+
+NuevoEstado(estado);
+
+_singleTicketViewModel.Estado = estado;
+_messageService.ShowNotification(_notificationService, _ticketViewModel.Mensaje, _ticketViewModel.NotificacionSeveridad);
+}
+
+/// <summary>
+/// Se cambia el ticket a solucionado.
+/// </summary>
+/// <param name="ticketId"></param>
+/// <returns></returns>
+private async Task SolucionarTicket(long ticketId)
+{
+response = await _ticketViewModel.SolucionarTicket(ticketId);
+RespuestasChangeStateTickets("Solucionado");
+}
+
+/// <summary>
+/// Se cambia el ticket a pendiente
+/// </summary>
+/// <param name="ticketId"></param>
+/// <returns></returns>
+private async Task PendienteTicket(long ticketId)
+{
+response = await _ticketViewModel.PendienteTicket(ticketId);
+RespuestasChangeStateTickets("En progreso");
+}
+
+/// <summary>
+/// Se cambia el ticket a activo
+/// </summary>
+/// <param name="ticketId"></param>
+/// <returns></returns>
+private async Task ActivarTicket(long ticketId)
+{
+response = await _ticketViewModel.ActivarTicket(ticketId);
+RespuestasChangeStateTickets("Activo");
+}
+
+/// <summary>
+/// Se cambia el ticket a visto
+/// </summary>
+/// <param name="ticketId"></param>
+/// <returns></returns>
+private async Task VistoTicket(long ticketId)
+{
+response = await _ticketViewModel.VistoTicket(ticketId);
+RespuestasChangeStateTickets("Visto");
+}
+
+/// <summary>
+/// Convierte la imagen en base64 para guardar en la base de datos como cadena de texto.
+/// </summary>
+/// <param name="e"></param>
+/// <returns></returns>
+async Task SubirImagen(InputFileChangeEventArgs e)
+{
+var files = e.GetMultipleFiles();
+foreach (var file in files)
+{
+  var resizedFile = await file.RequestImageFileAsync(file.ContentType, 800, 600);
+  var buf = new byte[resizedFile.Size];
+  using (var stream = resizedFile.OpenReadStream())
+  {
+      await stream.ReadAsync(buf);
+  }
+  _singleTicketViewModel.Imagen = Convert.ToBase64String(buf);
+}
+}
+}
+
+@functions {
+}

@@ -1,0 +1,215 @@
+﻿@page "/Inicio"
+@using HelpDesk.ViewModels;
+@using HelpDesk.Shared.Models;
+@using System.Threading;
+@using Microsoft.AspNetCore.SignalR.Client;
+
+@inject NavigationManager _navigationManager
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+@inject IProfileViewModel _profileViewModel
+@inject IJornadaViewModel _jornadaViewModel
+@inject ITicketViewModel _ticketViewModel
+@inject ISettingsViewModel _settingsViewModel
+@inject IUsuariosChatViewModel _usuariosChatViewModel
+@inject IGrupoChatViewModel _grupoChatViewModel
+
+
+<AuthorizeView>
+    <Authorized>
+        <h2><b>Mi Panel de Inicio</b></h2>
+        <hr />
+    </Authorized>
+</AuthorizeView>
+
+@if (!Loaded)
+{
+    <div class="mt-4">
+        <div class="spinner"></div>
+    </div>
+}
+else
+{
+    <AuthorizeView>
+        <Authorized>
+            <div class="row">
+                <div class="col-lg-4 col-md-6">
+                    <RadzenCard class="m-2 rounded-slg shadow-sm">
+                        <h4 class="font-weight-bold p-2 rounded-slg bg-light text-center shadow-sm">Mi fichaje</h4>
+                        <div class="d-flex flex-row m-4 mx-auto">
+                            <div class="mx-auto">
+                                <h3 class="font-weight-bold">@Time</h3>
+                                <p class="text-muted">Jornada de hoy</p>
+                            </div>
+                        </div>
+                        <div class="row m-2">
+                            @*if (_fichajeViewModel.FichajeActual.HoraEntrada == null)
+                                {
+                                    <div class="col-md-6 text-center mt-2">
+                                        <RadzenButton Text="Empezar" ButtonStyle="ButtonStyle.Secondary" class="shadow-sm" />
+                                    </div>
+                                }
+                                else if (_fichajeViewModel.FichajeActual.HoraSalida == null)
+                                {
+                                    <div class="col-md-6 text-center mt-2">
+                                        <RadzenButton Text="Finalizar" ButtonStyle="ButtonStyle.Danger" class="shadow-sm" />
+                                    </div>
+                                }*@
+                        </div>
+                    </RadzenCard>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <RadzenCard class="m-2 rounded-slg shadow-sm">
+                        <h4 class="font-weight-bold p-2 rounded-slg bg-light text-center shadow-sm"> Tickets</h4>
+                        <div class="d-flex flex-row m-4 mx-auto">
+                            <div>
+                                <h5 class="font-weight-light text-muted">@*_ticketViewModel.CargarTotalTicketsAsignados("Todos")*@ tickets asignados</h5>
+                            </div>
+                        </div>
+                        <div class="col-lg-12 text-center">
+                            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text="Ver" />
+                        </div>
+                    </RadzenCard>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <RadzenCard class="m-2 rounded-slg shadow-sm">
+                        <h4 class="font-weight-bold p-2 rounded-slg bg-light text-center shadow-sm"> Mis dispositivos</h4>
+                        <div class="d-flex flex-row m-4 mx-auto">
+                            <div>
+                                <h5 class="font-weight-light text-muted">2 dispositivos en uso</h5>
+                            </div>
+                        </div>
+                        <div class="col-lg-12 text-center">
+                            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text="Ver todos" />
+                        </div>
+                    </RadzenCard>
+                </div>
+                <div class="col-lg-6 col-md-6">
+                    <RadzenCard class="m-2 rounded-slg shadow-sm">
+                        <h4 class="font-weight-bold p-2 rounded-slg bg-light text-center shadow-sm"> Mi calendario</h4>
+                        <div class="d-flex flex-row m-4 mx-auto">
+                            <div>
+                                <RadzenDatePicker TValue="DateTime?" Inline="true" />
+                            </div>
+                        </div>
+                        <div class="col-lg-12 text-center">
+                            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text="Ver todos" />
+                        </div>
+                    </RadzenCard>
+                </div>
+            </div>
+            <h4><b>@_profileViewModel.DepartamentoNombre</b></h4>
+            <hr>
+            <AuthorizeView Policy="EsAdministradorRecursos Humanos">
+                <ChildContent Context="RRHH">
+                    <RadzenCard class="m-3 rounded-slg">
+                        <h3 class="h5">Administradores de Recursos Humanos</h3>
+                        <div class="d-flex flex-row">
+                            <div>
+                                <div>Probando</div>
+                            </div>
+                        </div>
+                    </RadzenCard>
+                </ChildContent>
+            </AuthorizeView>
+            <AuthorizeView Policy="EsRecursos Humanos">
+                <ChildContent Context="UsuarioRRHH">
+                    <RadzenCard class="m-3 rounded-slg">
+                        <h3 class="h5">Recursos Humanos</h3>
+                        <div class="d-flex flex-row">
+                            <div>
+                                <div>Probando</div>
+                            </div>
+                        </div>
+                    </RadzenCard>
+                </ChildContent>
+            </AuthorizeView>
+            <AuthorizeView Policy="EsAdministradorInformática">
+                <ChildContent Context="AdministradorIT">
+                    <RadzenCard class="m-3 rounded-slg">
+                        <h3 class="h5">Administradores de Informática</h3>
+                        <div class="d-flex flex-row">
+                            <div>
+                                <div>Probando</div>
+                            </div>
+                        </div>
+                    </RadzenCard>
+                </ChildContent>
+            </AuthorizeView>
+            <AuthorizeView Policy="EsInformática">
+                <ChildContent Context="UsuarioIT">
+                    <RadzenCard class="m-3 rounded-slg">
+                        <h3 class="h5">Informática</h3>
+                        <div class="d-flex flex-row">
+                            <div>
+                                <div>Probando</div>
+                            </div>
+                        </div>
+                    </RadzenCard>
+                </ChildContent>
+            </AuthorizeView>
+        </Authorized>
+        <NotAuthorized>
+            <h5>Debes iniciar sesión para acceder al contenido.</h5>
+        </NotAuthorized>
+    </AuthorizeView>
+}
+@code {
+    private bool Loaded { get; set; } = true;
+    private string Time { get; set; }
+    private Timer Timer { get; set; }
+
+    DateTime StartDate = new();
+    DateTime EndDate = new();
+
+    /// <summary>
+    /// Inicializa
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        Loaded = Shared.Funciones.Spinner(true);
+
+        StartDate = DateTime.Now;
+        StartDate = Shared.DateTimeExtensions.StartOfWeek(StartDate, DayOfWeek.Monday);
+        EndDate = StartDate.AddDays(6);
+
+        await _jornadaViewModel.GetMisFichajes(StartDate, EndDate);
+
+        await _profileViewModel.GetPerfil();
+        StartTimer();
+        Loaded = Shared.Funciones.Spinner(false);
+    }
+
+    /// <summary>
+    /// Empieza el temporizador de la hora
+    /// </summary>
+    private void StartTimer()
+    {
+        Timer = new((_) =>
+        {
+            InvokeAsync(() =>
+            {
+                if (_jornadaViewModel.JornadaActual.Fichajes.Count > 0)
+                {
+                    if (_jornadaViewModel.JornadaActual.Fichajes.LastOrDefault().HoraEntrada?.ToString() != null && _jornadaViewModel.JornadaActual.Fichajes.LastOrDefault().HoraSalida?.ToString() == null)
+                    {
+                        TimeSpan? TiempoTotalHoy = (DateTime.Now - _jornadaViewModel.JornadaActual.Fichajes.LastOrDefault().HoraEntrada);
+                        Time = String.Format("{0} h {1} m", TiempoTotalHoy?.Hours, TiempoTotalHoy?.Minutes);
+                    }
+                    else if (_jornadaViewModel.JornadaActual.Fichajes.LastOrDefault().HoraSalida?.ToString() != null)
+                    {
+                        TimeSpan? TiempoTotalHoy = (_jornadaViewModel.JornadaActual.Fichajes.LastOrDefault().HoraSalida - _jornadaViewModel.JornadaActual.Fichajes.LastOrDefault().HoraEntrada);
+                        Time = String.Format("{0} h {1} m", TiempoTotalHoy?.Hours, TiempoTotalHoy?.Minutes);
+                    }
+                    else
+                    {
+                        Time = "0 h 0 m";
+                    }
+                }
+                StateHasChanged();
+            });
+        }, null, 0, 60000);
+    }
+
+}

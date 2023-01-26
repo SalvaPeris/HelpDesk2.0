@@ -1,0 +1,143 @@
+﻿@page "/Dispositivos"
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+
+@inject IDispositivosViewModel _dispositivosViewModel
+@inject ISettingsViewModel _settingsViewModel
+@inject NavigationManager _navigationManager
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+<AuthorizeView>
+    <Authorized>
+        <div class="row">
+            <div class="col-lg-6 text-left">
+                <h2><b>Dispositivos</b></h2>
+            </div>
+            <div class="col-lg-6 text-right">
+                <RadzenButton Click=@(args => Shared.Funciones.NavegarA(_navigationManager ,"Dispositivos/0")) Icon="add_circle_outline" ButtonStyle="ButtonStyle.Secondary" Text="Nuevo Dispositivo" />
+            </div>
+        </div>
+        <hr />
+    </Authorized>
+</AuthorizeView>
+@if (!Loaded)
+{
+    <div class="mt-4">
+        <div class="spinner"></div>
+    </div>
+}
+else
+{
+    <AuthorizeView>
+        <Authorized>
+            @if (_dispositivosViewModel.Dispositivos.Count > 0)
+            {
+                <RadzenDataList WrapItems="true" AllowPaging="true" Data="@_dispositivosViewModel.Dispositivos" TItem="Dispositivo" PageSize="10" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true">
+                    <Template Context="dispositivo">
+                        <RadzenCard Class="p-0 rounded-slg shadow-sm">
+                            <div>
+                                <div class="row">
+                                    <div class="col-lg-2 py-3 px-4">
+                                        <div class="my-auto mx-auto row">
+                                            <div class="col-md-12 col-lg-12 text-center">
+                                                <img class="rounded p-2 mx-auto" src="data:image/png;base64,@dispositivo.Tipo.Imagen" style="max-width: 50px; max-height: 50px;" />
+                                            </div>
+                                            <div class="col-md-12 col-lg-12 text-center">
+                                                @if (dispositivo.Utilizado)
+                                                {
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="En Uso" IsPill="true" />
+                                                }
+                                                else
+                                                {
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Libre" IsPill="true" />
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-10 p-4 my-auto">
+                                        <div class="row d-flex">
+                                            <div class="col-md-6 col-lg-3 my-auto">
+                                                <div class="p-1 font-weight-bold">
+                                                    <a href="javascript:void(0)" @onclick="@(args => EditarDispositivo(dispositivo.DispositivoId))"><h5 class="mb-0 font-weight-bold" style="font-size:large">@(dispositivo.Marca + " " + dispositivo.Modelo)</h5></a>
+                                                </div>
+                                                <div class="p-1 text-muted">
+                                                    @(dispositivo.NumeroSerie)
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-lg-3 my-auto">
+                                                <div class="text-lightdark">
+                                                    @dispositivo.UsuariosCuenta usuarios utilizan este dispositivo
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-lg-3 my-auto">
+                                                <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text=@(dispositivo.EmpresaExternaNombre) />
+                                            </div>
+                                            <div class="col-md-6 col-lg-3 my-auto">
+
+                                                <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text=@(dispositivo.DepartamentoNombre) />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </RadzenCard>
+                    </Template>
+                </RadzenDataList>
+            }
+            else
+            {
+                <h5 class="text-center text-muted">No tienes ningún dispositivo asociado.</h5>
+            }
+        </Authorized>
+        <NotAuthorized>
+            <h5>Debes iniciar sesión para acceder al contenido.</h5>
+        </NotAuthorized>
+    </AuthorizeView>
+}
+
+@code {
+
+    private bool Loaded { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Spinner(true);
+        await _dispositivosViewModel.GetDispositivos();
+        Spinner(false);
+    }
+
+    private async Task BuscarDispositivo(string value)
+    {
+        Spinner(true);
+        _settingsViewModel.EstadoNavegacion = "Dispositivos";
+
+        if (value.Equals(""))
+        {
+            await _dispositivosViewModel.GetDispositivos();
+        }
+        else if (value.Length > 0 && value.Length % 2 == 0)
+        {
+            //await _dispositivoViewModel.BuscarUsuario(value);
+        }
+        Spinner(false);
+    }
+
+    /// <summary>
+    /// Redirecciona al SingleDispositivo para modificar
+    /// </summary>
+    /// <param name="dispositivoId"></param>
+    private void EditarDispositivo(Guid dispositivoId)
+    {
+        _navigationManager.NavigateTo($"/Dispositivos/{dispositivoId}");
+    }
+
+    /// <summary>
+    /// Se muestra o no el spinner según si está cargado o no
+    /// </summary>
+    /// <param name="activo"></param>
+    private void Spinner(bool activo)
+    {
+        Loaded = activo ? false : true;
+    }
+}
+

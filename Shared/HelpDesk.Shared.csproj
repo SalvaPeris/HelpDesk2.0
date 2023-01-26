@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+      <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Models\Ticket\" />
+    <None Remove="Models\Dispositivo\" />
+    <None Remove="Models\Shared\" />
+    <None Remove="Models\Shared\Horarios\" />
+    <None Remove="Models\Shared\Jornadas\" />
+    <None Remove="Models\Shared\Jornadas\Ausencias\" />
+    <None Remove="Models\Shared\Jornadas\Fichaje\" />
+    <None Remove="Models\Shared\Archivo\" />
+    <None Remove="Models\Shared\Jornadas\Turnos\" />
+    <None Remove="Models\Chat\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Models\Ticket\" />
+    <Folder Include="Models\Dispositivo\" />
+    <Folder Include="Models\Shared\" />
+    <Folder Include="Models\Shared\Horarios\" />
+    <Folder Include="Models\Shared\Jornadas\" />
+    <Folder Include="Models\Shared\Jornadas\Ausencias\" />
+    <Folder Include="Models\Shared\Jornadas\Fichaje\" />
+    <Folder Include="Models\Shared\Archivo\" />
+    <Folder Include="Models\Shared\Jornadas\Turnos\" />
+    <Folder Include="Models\Chat\" />
+  </ItemGroup>
+</Project>

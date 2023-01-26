@@ -1,0 +1,661 @@
+@page "/Tickets"
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+@using System.Net
+
+@inject ITicketViewModel _ticketViewModel
+@inject IMainViewModel _mainViewModel
+@inject ISettingsViewModel _settingsViewModel
+@inject NavigationManager _navigationManager
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+
+<AuthorizeView>
+    <Authorized>
+        <div class="row">
+            <div class="col-lg-6 text-left">
+                <h2><b>Tickets</b></h2>
+            </div>
+            <div class="col-lg-6 text-right">
+                <RadzenButton Click=@(args => Shared.Funciones.NavegarA(_navigationManager ,"Tickets/0")) Icon="add_circle_outline" ButtonStyle="ButtonStyle.Secondary" Text="Nuevo Ticket" />
+            </div>
+        </div>
+        <hr />
+        <div class="row">
+            <div class="col-lg-5">
+                <RadzenSelectBar @bind-Value=@_settingsViewModel.EstadoTickets TValue="int" Change="RefrescarSinMensaje">
+                    <Items>
+                        <RadzenSelectBarItem Text="Departamentales" Value="1" />
+                        <RadzenSelectBarItem Text="Míos" Value="2" />
+                        <RadzenSelectBarItem Text="Asignados" Value="3" />
+                    </Items>
+                </RadzenSelectBar>
+            </div>
+            <div class="col-lg-3">
+                <RadzenTextBox @oninput=@(args => BuscarTicket(args.Value.ToString())) Placeholder="Buscar..." />
+            </div>
+            <div class="col-lg-2">
+                <RadzenMenu>
+                    <RadzenMenuItem Text="@_settingsViewModel.EstadoMenuTickets">
+                        <RadzenMenuItem Text="Activos" Click="@(args => GetTicketsByMenu(_settingsViewModel.EstadoTickets, "Activos", 0, TicketsPorPagina))"></RadzenMenuItem>
+                        <RadzenMenuItem Text="Vistos" Click="@(args => GetTicketsByMenu(_settingsViewModel.EstadoTickets, "Vistos", 0, TicketsPorPagina))"></RadzenMenuItem>
+                        <RadzenMenuItem Text="Pendientes" Click="@(args => GetTicketsByMenu( _settingsViewModel.EstadoTickets, "Pendientes", 0, TicketsPorPagina))"></RadzenMenuItem>
+                        <RadzenMenuItem Text="Solucionados" Click="@(args => GetTicketsByMenu(_settingsViewModel.EstadoTickets, "Solucionados", 0, TicketsPorPagina))"></RadzenMenuItem>
+                        <RadzenMenuItem Text="Todos" Click="@(args => GetTicketsByMenu(_settingsViewModel.EstadoTickets, "Todos", 0, TicketsPorPagina))"></RadzenMenuItem>
+                    </RadzenMenuItem>
+                </RadzenMenu>
+            </div>
+            <div class="col-lg-2">
+                <RadzenButton Click="Refrescar" Icon="refresh" Text="Actualizar" ButtonStyle="ButtonStyle.Primary" />
+            </div>
+        </div>
+
+        @if (!Loaded)
+        {
+            <div class="mt-4">
+                <div class="spinner"></div>
+            </div>
+        }
+        else
+        {
+    <div class="mb-4 mt-4">
+        @if (_ticketViewModel.Tickets.Count > 0)
+        {
+            <RadzenDataList WrapItems="true" Data="@_ticketViewModel.Tickets" TItem="Ticket" TicketsPorPagina="15" PagerHorizontalAlign="HorizontalAlign.Left">
+                <Template Context="ticket">
+                    <RadzenCard Class="mx-2 p-0 rounded-slg shadow-sm">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="row px-3">
+                                    <div class="col-lg-6 text-left p-2">
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@("#" + ticket.TicketId.ToString())" />
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text=@(ticket.Area) />
+                                        @*if (ticket.Publico)
+                                        {
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="Público" />
+                                        }
+                                        else
+                                        {
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="Privado" />
+                                        }*@
+
+                                        @*if (ticket.CreadoPor == _mainViewModel.Identificador)
+                                        {
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Propio" />
+                                        }*@
+
+                                        @if (ticket.TipoTicket != null)
+                                        {
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Light" IsPill="true" Text="@ticket.TipoTicket" />
+                                        }
+                                    </div>
+                                    <div class="col-lg-6 text-right p-2 font-weight-bold">
+                                        @ticket.FechaCreado.ToString("M")
+                                    </div>
+                                    <div class="col-lg-12 m-2">
+                                        <div class="col-lg-12 font-weight-bold">
+                                            <a href="javascript:void(0)" @onclick="@(args => EditarTicket(ticket.TicketId))"><h5 class="mb-0 font-weight-bold" style="font-size:large">@(ticket.Titulo)</h5></a>
+                                        </div>
+                                        <div class="col-lg-12 text-dark">
+                                            @if (ticket.Observaciones.Length > 500)
+                                            {
+                                                @((MarkupString)ticket.Observaciones.Substring(0, 500).ToString())
+                                            }
+                                            else
+                                            {
+                                                @((MarkupString)ticket.Observaciones)
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-12 p-2">
+                                        <div class="row d-flex">
+                                            <div class="col-md-6 col-lg-6">
+
+                                                @if (ticket.Estado.Equals("Solucionado"))
+                                                {
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="@(ticket.Estado)" />
+                                                }
+                                                else if (ticket.Estado.Equals("En progreso"))
+                                                {
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Text="@ticket.Estado" />
+                                                }
+                                                else if (ticket.Estado.Equals("Activo"))
+                                                {
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Text="@ticket.Estado" />
+                                                }
+                                                else if (ticket.Estado.Equals("Visto"))
+                                                {
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" IsPill="true" Text="@ticket.Estado" />
+                                                }
+
+                                                @if (ticket.Gravedad.Equals("Crítico"))
+                                                {
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Text="@ticket.Gravedad" />
+                                                }
+                                                else if (ticket.Gravedad.Equals("Grave"))
+                                                {
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Text="@ticket.Gravedad" />
+                                                }
+                                                else if (ticket.Gravedad.Equals("Leve"))
+                                                {
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" IsPill="true" Text="@ticket.Gravedad" />
+                                                }
+
+                                                <span class="material-icons md-20 text-lightdark ml-2">
+                                                    forum
+                                                </span>
+                                                <span class="text-muted">
+                                                    @ticket.SuplementosCuenta comentarios
+                                                </span>
+                                                <span class="material-icons md-20 text-lightdark ml-2">
+                                                    place
+                                                </span>
+                                                <span class="text-muted">
+                                                    @ticket.ZonasCuenta ubicaciones
+                                                </span>
+                                            </div>
+                                            <div class="col-md-6 col-lg-6 text-right">
+                                                <RadzenAccordion>
+                                                    <Items>
+                                                        <p>@ticket.AsignadoANombreCompleto</p>
+                                                    </Items>
+                                                </RadzenAccordion>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </RadzenCard>
+                </Template>
+            </RadzenDataList>
+        }
+        else
+        {
+            <h5 class="text-center text-muted">No se ha encontrado ningún ticket.</h5>
+        }
+
+        <div class="row mt-4">
+            <div class="col-lg-6 text-left text-muted">
+                <RadzenLabel Text="@("Total " + TotalTickets + " tickets. ")" Style="margin-left: 8px; margin-right: 8px; vertical-align: middle;" />
+                <RadzenLabel Text="@("Última actualización: " + _settingsViewModel.EstadoUltimaActualizacionTickets.ToString("f"))" Style="margin-left: 8px; margin-right: 8px; vertical-align: middle;" />
+            </div>
+            <div class="col-lg-6 text-right text-muted">
+                <RadzenButton Click=@(args => CargarTicketsMenos()) ButtonStyle="ButtonStyle.Secondary" Icon="chevron_left" Disabled="@OcultarMenos" />
+                <RadzenLabel Text="@("  Página " + _settingsViewModel.EstadoCuentaTickets + " de " + Paginas + "  ")" Style="margin-left: 8px; margin-right: 8px; vertical-align: middle;" />
+                <RadzenButton Click=@(args => CargarTicketsMas()) ButtonStyle="ButtonStyle.Secondary" Icon="navigate_next" Disabled="@OcultarMas" />
+            </div>
+        </div>
+    </div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <h5>Debes iniciar sesión para acceder al contenido.</h5>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+    private HttpResponseMessage response { get; set; }
+    private Usuario usuario { get; set; }
+    private bool Loaded { get; set; } = true;
+    private bool OcultarMas { get; set; } = true;
+    private bool OcultarMenos { get; set; } = true;
+    private int TotalTickets { get; set; }
+    private int Paginas { get; set; } = 1;
+    int TicketsPorPagina = 15;
+
+    /// <summary>
+    /// Cargar los tickets
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        Spinner(true);
+        _settingsViewModel.EstadoNavegacion = "Tickets";
+
+        if (_settingsViewModel.EstadoMenuTickets == null)
+            _settingsViewModel.EstadoMenuTickets = "Todos";
+
+        if (_settingsViewModel.EstadoTickets == 0)
+            _settingsViewModel.EstadoTickets = 1;
+
+        if (_settingsViewModel.EstadoCuentaTickets == 0)
+            _settingsViewModel.EstadoCuentaTickets = 1;
+
+        await GetTicketsByMenu(_settingsViewModel.EstadoTickets, _settingsViewModel.EstadoMenuTickets, (_settingsViewModel.EstadoCuentaTickets - 1) * TicketsPorPagina, TicketsPorPagina);
+        await CalculoPaginas();
+
+        Spinner(false);
+    }
+
+    /// <summary>
+    /// Refresca los Tickets
+    /// </summary>
+    /// <returns></returns>
+    private async Task Refrescar()
+    {
+        Spinner(true);
+        await GetTicketsByMenu(_settingsViewModel.EstadoTickets, _settingsViewModel.EstadoMenuTickets, (_settingsViewModel.EstadoCuentaTickets - 1) * TicketsPorPagina, TicketsPorPagina);
+        await CalculoPaginas();
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            _ticketViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+            _ticketViewModel.Mensaje = "Tickets actualizados correctamente.";
+        }
+        else
+        {
+            _ticketViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+            _ticketViewModel.Mensaje = "Ha habido un error al actualizar los tickets.";
+        }
+        _messageService.ShowNotification(_notificationService, _ticketViewModel.Mensaje, _ticketViewModel.NotificacionSeveridad);
+
+        Spinner(false);
+    }
+
+    /// <summary>
+    /// Refresca la lista sin mostrar ninguna notificación
+    /// </summary>
+    /// <returns></returns>
+    private async Task RefrescarSinMensaje()
+    {
+        Spinner(true);
+        await GetTicketsByMenu(_settingsViewModel.EstadoTickets, _settingsViewModel.EstadoMenuTickets, (_settingsViewModel.EstadoCuentaTickets - 1) * TicketsPorPagina, TicketsPorPagina);
+        await CalculoPaginas();
+        Spinner(false);
+    }
+
+    /// <summary>
+    /// Calcula las páginas
+    /// </summary>
+    /// <returns></returns>
+    protected async Task CalculoPaginas()
+    {
+        switch (_settingsViewModel.EstadoTickets)
+        {
+            case 1:
+                TotalTickets = await _ticketViewModel.CargarTotalTickets(_settingsViewModel.EstadoMenuTickets);
+                break;
+            case 2:
+                TotalTickets = await _ticketViewModel.CargarTotalTicketsPropios(_settingsViewModel.EstadoMenuTickets);
+                break;
+            case 3:
+                TotalTickets = await _ticketViewModel.CargarTotalTicketsAsignados(_settingsViewModel.EstadoMenuTickets);
+                break;
+        }
+
+        Paginas = TotalTickets / TicketsPorPagina;
+
+        if (TotalTickets % TicketsPorPagina > 0)
+        {
+            Paginas++;
+        }
+
+        if (Paginas == 0)
+        {
+            Paginas = 1;
+            OcultarMas = true;
+        }
+        else
+        {
+            OcultarMas = false;
+        }
+
+        if (_settingsViewModel.EstadoCuentaTickets == Paginas)
+        {
+            OcultarMas = true;
+            OcultarMenos = true;
+        }
+
+        if (_settingsViewModel.EstadoCuentaTickets > 1)
+        {
+            OcultarMenos = false;
+        }
+        else
+        {
+            OcultarMenos = true;
+        }
+    }
+
+    /// <summary>
+    /// Cargar Tickets
+    /// </summary>
+    /// <returns></returns>
+    protected async Task CargarTicketsMas()
+    {
+        _settingsViewModel.EstadoCuentaTickets++;
+        await GetTicketsByMenu(_settingsViewModel.EstadoTickets, _settingsViewModel.EstadoMenuTickets, (_settingsViewModel.EstadoCuentaTickets - 1) * TicketsPorPagina, TicketsPorPagina);
+
+        if (_settingsViewModel.EstadoCuentaTickets > Paginas - 1)
+        {
+            OcultarMas = true;
+        }
+
+        if (_settingsViewModel.EstadoCuentaTickets > 1)
+        {
+            OcultarMenos = false;
+        }
+    }
+
+    /// <summary>
+    /// Cargar Tickets
+    /// </summary>
+    /// <returns></returns>
+    protected async Task CargarTicketsMenos()
+    {
+        _settingsViewModel.EstadoCuentaTickets--;
+        await GetTicketsByMenu(_settingsViewModel.EstadoTickets, _settingsViewModel.EstadoMenuTickets, (_settingsViewModel.EstadoCuentaTickets - 1) * TicketsPorPagina, TicketsPorPagina);
+
+        if (_settingsViewModel.EstadoCuentaTickets > 1)
+        {
+            OcultarMenos = false;
+        }
+        else
+        {
+            OcultarMenos = true;
+        }
+
+        if (_settingsViewModel.EstadoCuentaTickets < Paginas)
+        {
+            OcultarMas = false;
+        }
+    }
+
+    /// <summary>
+    /// Respuestas al dar error al recuperar la lista de tickets
+    /// </summary>
+    private void RespuestasGetTickets()
+    {
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            _ticketViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+            _ticketViewModel.Mensaje = "Ha habido un error al recuperar los tickets.";
+            _messageService.ShowNotification(_notificationService, _ticketViewModel.Mensaje, _ticketViewModel.NotificacionSeveridad);
+        }
+        Spinner(false);
+    }
+
+    /// <summary>
+    /// Respuestas en los cambios de estado
+    /// </summary>
+    /// <param name="estado"></param>
+    /// <returns></returns>
+    private async Task RespuestasChangeStateTickets(string estado)
+    {
+        TotalTickets = await _ticketViewModel.CargarTotalTickets(_settingsViewModel.EstadoMenuTickets);
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            _ticketViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+            _ticketViewModel.Mensaje = "Ha habido un error al recuperar los tickets.";
+        }
+        else
+        {
+            _ticketViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+            _ticketViewModel.Mensaje = "Se ha actualizado el ticket a " + estado + ".";
+        }
+        await GetTicketsByMenu(_settingsViewModel.EstadoTickets, _settingsViewModel.EstadoMenuTickets, 0, TicketsPorPagina);
+        _settingsViewModel.EstadoCuentaTickets = 0;
+        _messageService.ShowNotification(_notificationService, _ticketViewModel.Mensaje, _ticketViewModel.NotificacionSeveridad);
+    }
+
+    /// <summary>
+    /// Cargar los tickets activos
+    /// </summary>
+    /// <returns></returns>
+    private async Task GetTicketsActivos(int skip, int top)
+    {
+        _settingsViewModel.EstadoMenuTickets = "Activos";
+        Spinner(true);
+        switch (_settingsViewModel.EstadoTickets)
+        {
+            case 1:
+                response = await _ticketViewModel.GetTicketsActivos(skip, top);
+                break;
+            case 2:
+                response = await _ticketViewModel.GetTicketsPropiosActivos(skip, top);
+                break;
+            case 3:
+                response = await _ticketViewModel.GetTicketsAsignadosActivos(skip, top);
+                break;
+            default:
+                response = await _ticketViewModel.GetTicketsActivos(skip, top);
+                break;
+        }
+        RespuestasGetTickets();
+    }
+
+    /// <summary>
+    /// Cargar los tickets vistos
+    /// </summary>
+    /// <returns></returns>
+    private async Task GetTicketsVistos(int skip, int top)
+    {
+        _settingsViewModel.EstadoMenuTickets = "Vistos";
+        Spinner(true);
+        switch (_settingsViewModel.EstadoTickets)
+        {
+            case 1:
+                response = await _ticketViewModel.GetTicketsVistos(skip, top);
+                break;
+            case 2:
+                response = await _ticketViewModel.GetTicketsPropiosVistos(skip, top);
+                break;
+            case 3:
+                response = await _ticketViewModel.GetTicketsAsignadosVistos(skip, top);
+                break;
+            default:
+                response = await _ticketViewModel.GetTicketsVistos(skip, top);
+                break;
+        }
+        RespuestasGetTickets();
+    }
+
+    /// <summary>
+    /// Cargar los tickets pendientes
+    /// </summary>
+    /// <returns></returns>
+    private async Task GetTicketsPendientes(int skip, int top)
+    {
+        _settingsViewModel.EstadoMenuTickets = "Pendientes";
+        Spinner(true);
+        switch (_settingsViewModel.EstadoTickets)
+        {
+            case 1:
+                response = await _ticketViewModel.GetTicketsPendientes(skip, top);
+                break;
+            case 2:
+                response = await _ticketViewModel.GetTicketsPropiosPendientes(skip, top);
+                break;
+            case 3:
+                response = await _ticketViewModel.GetTicketsAsignadosPendientes(skip, top);
+                break;
+            default:
+                response = await _ticketViewModel.GetTicketsPendientes(skip, top);
+                break;
+        }
+        RespuestasGetTickets();
+    }
+
+    /// <summary>
+    /// Cargar los tickets solucionados
+    /// </summary>
+    /// <returns></returns>
+    private async Task GetTicketsSolucionados(int skip, int top)
+    {
+        _settingsViewModel.EstadoMenuTickets = "Solucionados";
+        Spinner(true);
+        switch (_settingsViewModel.EstadoTickets)
+        {
+            case 1:
+                response = await _ticketViewModel.GetTicketsSolucionados(skip, top);
+                break;
+            case 2:
+                response = await _ticketViewModel.GetTicketsPropiosSolucionados(skip, top);
+                break;
+            case 3:
+                response = await _ticketViewModel.GetTicketsAsignadosSolucionados(skip, top);
+                break;
+            default:
+                response = await _ticketViewModel.GetTicketsSolucionados(skip, top);
+                break;
+        }
+        RespuestasGetTickets();
+    }
+
+    /// <summary>
+    /// Cargar los tickets
+    /// </summary>
+    /// <returns></returns>
+    private async Task GetTicketsTodos(int skip, int top)
+    {
+        _settingsViewModel.EstadoMenuTickets = "Todos";
+        Spinner(true);
+        switch (_settingsViewModel.EstadoTickets)
+        {
+            case 1:
+                response = await _ticketViewModel.GetTicketsTodos(skip, top);
+                break;
+            case 2:
+                response = await _ticketViewModel.GetTicketsPropiosTodos(skip, top);
+                break;
+            case 3:
+                response = await _ticketViewModel.GetTicketsAsignadosTodos(skip, top);
+                break;
+            default:
+                response = await _ticketViewModel.GetTicketsTodos(skip, top);
+                break;
+        }
+        RespuestasGetTickets();
+    }
+
+    /// <summary>
+    /// Se cambia el ticket a solucionado.
+    /// </summary>
+    /// <param name="ticketId"></param>
+    /// <returns></returns>
+    private async Task SolucionarTicket(long ticketId)
+    {
+        response = await _ticketViewModel.SolucionarTicket(ticketId);
+        await RespuestasChangeStateTickets("solucionado");
+    }
+
+    /// <summary>
+    /// Se cambia el ticket a pendiente
+    /// </summary>
+    /// <param name="ticketId"></param>
+    /// <returns></returns>
+    private async Task PendienteTicket(long ticketId)
+    {
+        response = await _ticketViewModel.PendienteTicket(ticketId);
+        await RespuestasChangeStateTickets("en progreso");
+    }
+
+    /// <summary>
+    /// Se cambia el ticket a activo
+    /// </summary>
+    /// <param name="ticketId"></param>
+    /// <returns></returns>
+    private async Task ActivarTicket(long ticketId)
+    {
+        response = await _ticketViewModel.ActivarTicket(ticketId);
+        await RespuestasChangeStateTickets("activo");
+    }
+
+    /// <summary>
+    /// Se cambia el ticket a visto
+    /// </summary>
+    /// <param name="ticketId"></param>
+    /// <returns></returns>
+    private async Task VistoTicket(long ticketId)
+    {
+        response = await _ticketViewModel.VistoTicket(ticketId);
+        await RespuestasChangeStateTickets("visto");
+    }
+
+    /// <summary>
+    /// Envía a la función según el item del menú que esté activo
+    /// </summary>
+    /// <returns></returns>
+    private async Task GetTicketsByMenu(int estadoPropiedad, string estado, int skip, int top)
+    {
+        _settingsViewModel.EstadoTickets = estadoPropiedad;
+        _settingsViewModel.EstadoMenuTickets = estado;
+        _settingsViewModel.EstadoUltimaActualizacionTickets = DateTime.Now;
+
+        if (skip == 0)
+        {
+            _settingsViewModel.EstadoCuentaTickets = 1;
+            await CalculoPaginas();
+        }
+
+        switch (_settingsViewModel.EstadoMenuTickets)
+        {
+            case "Activos":
+                await GetTicketsActivos(skip, top);
+                break;
+            case "Solucionados":
+                await GetTicketsSolucionados(skip, top);
+                break;
+            case "Vistos":
+                await GetTicketsVistos(skip, top);
+                break;
+            case "Pendientes":
+                await GetTicketsPendientes(skip, top);
+                break;
+            default:
+                await GetTicketsTodos(skip, top);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Se buscan los tickets según la cadena de búsqueda
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    private async Task BuscarTicket(string value)
+    {
+        Spinner(true);
+
+        if (value.Equals(""))
+        {
+            await GetTicketsByMenu(_settingsViewModel.EstadoTickets, _settingsViewModel.EstadoMenuTickets, _settingsViewModel.EstadoCuentaTickets, TicketsPorPagina);
+        }
+        else if (value.Length > 0 && value.Length % 2 == 0)
+        {
+
+            switch (_settingsViewModel.EstadoTickets)
+            {
+                case 1:
+                    await _ticketViewModel.BuscarTicketsDepartamentales(value);
+                    break;
+                case 2:
+                    await _ticketViewModel.BuscarTicketsPropios(value);
+                    break;
+                case 3:
+                    await _ticketViewModel.BuscarTicketsAsignados(value);
+                    break;
+            }
+        }
+        RespuestasGetTickets();
+    }
+
+    /// <summary>
+    /// Redirecciona al SingleTicket para modificar
+    /// </summary>
+    /// <param name="ticketId"></param>
+    private void EditarTicket(long ticketId)
+    {
+        _navigationManager.NavigateTo($"/Tickets/{ticketId}");
+    }
+
+    /// <summary>
+    /// Se muestra o no el spinner según si está cargado o no
+    /// </summary>
+    /// <param name="activo"></param>
+    private void Spinner(bool activo)
+    {
+        Loaded = activo ? false : true;
+    }
+}

@@ -1,0 +1,58 @@
+﻿@page "/Configuracion"
+@using HelpDesk.ViewModels
+
+@inject NavigationManager _navigationManager
+@inject IProfileViewModel _profileViewModel
+
+<AuthorizeView Policy="EsSuperAdministrador">
+    <Authorized Context="SuperAdministrador">
+        <h2><b>Configuración</b></h2>
+        <hr />
+        <div class="m-4">
+            <h4><b>Tipos de Ticket</b></h4>
+            <hr>
+            <p>Probando</p>
+        </div>
+        <div class="m-4">
+            <h4><b>Áreas</b></h4>
+            <hr>
+            <p>Probando</p>
+        </div>
+        <div class="m-4">
+            <h4><b>Tipos de Dispositivo</b></h4>
+            <hr>
+            <p>Probando</p>
+        </div>
+        <div class="m-4">
+            <h4><b>Control remoto</b></h4>
+            <hr>
+            <p> Probando</p>
+        </div>
+        <div class="m-4">
+            <h4><b>Tipos de gravedad</b></h4>
+            <hr>
+            <p> Probando</p>
+        </div>
+        <div class="m-4">
+            <h4><b>Zonas</b></h4>
+            <hr>
+            <p> Probando</p>
+        </div>
+        <div class="m-4">
+            <h4><b>Empresas Externas</b></h4>
+            <hr>
+            <p> Probando</p>
+        </div>
+        <div class="m-4">
+            <h4><b>Logo Empresa</b></h4>
+            <hr>
+            <p> Probando</p>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <h5>Debes iniciar sesión para acceder al contenido.</h5>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+}

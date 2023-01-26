@@ -1,0 +1,401 @@
+﻿@page "/Dispositivos/{identificador}"
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+@using System.Net
+
+@inject ISingleDispositivoViewModel _singleDispositivoViewModel
+@inject IDepartamentoViewModel _departamentoViewModel
+@inject ITipoDispositivoViewModel _tiposDispositivoViewModel
+@inject IEmpresaExternaViewModel _empresasExternasViewModel
+@inject IUsuariosViewModel _usuariosViewModel
+@inject DialogService _dialogService
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+@inject NavigationManager _navigationManager
+@inject IMainViewModel _mainViewModel
+
+<AuthorizeView Policy="EsAdministrador">
+    <Authorized>
+        @if (identificador == "0")
+        {
+            <h2><b>Nuevo Dispositivo</b></h2>
+            <hr />
+        }
+        else
+        {
+            <h2><b>Editar Dispositivo</b></h2>
+            <hr />
+        }
+
+        @if (_singleDispositivoViewModel.DispositivoId.ToString() != identificador && identificador != "0")
+        {
+            <div class="spinner"></div>
+        }
+        else
+        {
+            @if (!Loaded)
+            {
+                <div class="mt-4">
+                    <div class="spinner"></div>
+                </div>
+            }
+            else
+            {
+                <EditForm Model="_singleDispositivoViewModel" OnValidSubmit="@AccionDispositivo">
+                    <ChildContent Context="Crear">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <div class="col-md-12 row">
+                                    <div class="col-md-6">
+                                        <label class="col-md-12 col-form-label">Tipo de dispositivo</label>
+                                        <div class="col-md-12">
+                                            <RadzenDropDown AllowClear="true" TValue="long" Class="w-100"
+                                                            AllowFiltering="true" Data=@OpcionesTipo @bind-Value="_singleDispositivoViewModel.TipoDispositivoId" TextProperty="Nombre" ValueProperty="Identificador" Placeholder="Tipo de dispositivo" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="col-md-12 col-form-label">Marca</label>
+                                        <div class="col-md-12">
+                                            <RadzenTextBox @bind-Value="_singleDispositivoViewModel.Marca" Class="w-100" Placeholder="Marca" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 row">
+                                    <div class="col-md-6">
+                                        <label class="col-md-12 col-form-label">Modelo</label>
+                                        <div class="col-md-12">
+                                            <RadzenTextBox @bind-Value="_singleDispositivoViewModel.Modelo" Class="w-100" Placeholder="Modelo" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="col-md-12 col-form-label">Número de serie</label>
+                                        <div class="col-md-12">
+                                            <RadzenTextBox @bind-Value="_singleDispositivoViewModel.NumeroSerie" Class="w-100" Placeholder="Número de serie" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-10">
+                                    <div class="my-1 p-2">
+                                        <h4 class="m-4"><b>Usuarios</b></h4>
+                                        <RadzenDataList Class="m-2 p-2" WrapItems="true" AllowPaging="true" Data="@_singleDispositivoViewModel.Usuarios" TItem="DispositivoUsuario" PageSize="10" PagerHorizontalAlign="HorizontalAlign.Left">
+                                            <Template Context="Usuario">
+                                                <RadzenDropDown AllowClear="true" TValue="Guid" Class="col-md-8 w-100"
+                                                                AllowFiltering="true" Data=@OpcionesUsuarios @bind-Value="Usuario.UsuarioId" TextProperty="NombreCompleto" ValueProperty="Identificador" />
+                                                <RadzenButton Class="col-md-1 m-1" ButtonStyle="ButtonStyle.Danger" Icon="delete" Click=@(args => SeguroEliminarUsuario(Usuario)) />
+                                            </Template>
+                                        </RadzenDataList>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 col-lg-12">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Warning" Text="Añadir usuario" Click="AsignarUsuario" Style="width: 200px" />
+                                </div>
+                            </div>
+                            @if (_singleDispositivoViewModel.Estados != null)
+                            {
+                                <div class="bg-white my-4 card p-2 shadow-sm rounded-slg border">
+                                    <h4 class="m-2"><b>Historial de estados</b></h4>
+                                    <RadzenDataList Class="m-2 p-2" WrapItems="true" AllowPaging="true" Data="@_singleDispositivoViewModel.Estados" TItem="EstadoDispositivo" PageSize="10" PagerHorizontalAlign="HorizontalAlign.Left">
+                                        <Template Context="Estado">
+                                            <p class="text-dark col-md-12 col-lg-12">@(Estado.FechaEstado.ToString("dd MMMM yyyy, HH:mm")) - <b>@(Estado.Estado)</b>@(Estado.Observaciones) por <b>@(Estado.EstadoPorNombreCompleto)</b></p>
+                                        </Template>
+                                    </RadzenDataList>
+                                </div>
+                            }
+                            <div class="form-group row">
+                                <div class="col-md-6">
+                                    <label class="col-md-12 col-form-label">Comprado a</label>
+                                    <div class="col-md-12">
+                                        <RadzenTextBox @bind-Value="_singleDispositivoViewModel.CompradoA" Class="w-100" Placeholder="Modelo" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="col-md-12 col-form-label">Situación</label>
+                                    <div class="col-md-12">
+                                        <RadzenTextBox @bind-Value="_singleDispositivoViewModel.Situacion" Class="w-100" Placeholder="Situación" />
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="col-md-12 col-form-label">Observaciones</label>
+                                    <div class="col-md-12">
+                                        <RadzenTextBox @bind-Value="_singleDispositivoViewModel.Observaciones" Class="w-100" Placeholder="Observaciones" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-12 col-form-label">Departamento</label>
+                                <div class="col-md-10">
+                                    <RadzenDropDown AllowClear="true" TValue="long" AllowVirtualization="true" Class="w-100"
+                                                    AllowFiltering="true" Data=@OpcionesDepartamentos @bind-Value=_singleDispositivoViewModel.DepartamentoId TextProperty="Nombre" ValueProperty="Identificador" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-12 col-form-label">Empresa Externa</label>
+                                <div class="col-md-10">
+                                    <RadzenDropDown AllowClear="true" TValue="long" AllowVirtualization="true" Class="w-100"
+                                                    AllowFiltering="true" Data=@OpcionesEmpresasExternas @bind-Value=_singleDispositivoViewModel.EmpresaExternaId TextProperty="Nombre" ValueProperty="Identificador" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-3 my-3">
+                                    <RadzenCheckBox @bind-Value="_singleDispositivoViewModel.FuncionaBien" Name="FuncionaBien" TValue="bool" />
+                                    <RadzenLabel Text="Funciona correctamente" Component="FuncionaBien" Style="margin-left: 8px; vertical-align: middle;" />
+                                </div>
+                                <div class="col-md-3 my-3">
+                                    <RadzenCheckBox @bind-Value="_singleDispositivoViewModel.Utilizado" Name="EnUso" TValue="bool" />
+                                    <RadzenLabel Text="En Uso" Component="EnUso" Style="margin-left: 8px; vertical-align: middle;" />
+                                </div>
+                                <div class="col-md-3 my-3">
+                                    <RadzenCheckBox @bind-Value="_singleDispositivoViewModel.LlevaMantenimiento" Name="LlevaMantenimiento" TValue="bool" />
+                                    <RadzenLabel Text="Lleva mantenimiento" Component="EnUso" Style="margin-left: 8px; vertical-align: middle;" />
+                                </div>
+                            </div>
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+                            <div class="col-md-12 my-3 row">
+                                <div class="col-md-8 text-left">
+                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar" Style="width: 120px" />
+                                    <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text="Volver" Click="Cancelar" Style="width: 120px" />
+                                </div>
+                                @if (identificador != "0")
+                                {
+                                    <div class="col-md-4 text-right">
+                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Text="Eliminar" Click="SeguroEliminarDispositivo" Style="width: 120px" />
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </ChildContent>
+                </EditForm>
+            }
+        }
+    </Authorized>
+    <NotAuthorized>
+        <h5>No estás autorizado para acceder al contenido.</h5>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code{
+
+    [Parameter]
+    public string identificador { get; set; }
+
+    List<object> OpcionesDepartamentos = new List<object>();
+    List<object> OpcionesUsuarios = new List<object>();
+    List<object> OpcionesTipo = new List<object>();
+    List<object> OpcionesEmpresasExternas = new List<object>();
+
+    private bool Loaded { get; set; } = true;
+    public string DepartamentoId { get; set; }
+    private bool EsNuevo { get; set; } = true;
+    private HttpResponseMessage response;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Spinner(true);
+
+        if (identificador != "0")
+        {
+            await _singleDispositivoViewModel.GetDispositivoPorId(identificador);
+            EsNuevo = false;
+        }
+        else
+        {
+            _singleDispositivoViewModel.Anular();
+        }
+
+        await _departamentoViewModel.GetDepartamentos();
+        await _usuariosViewModel.GetUsuarios();
+        await _tiposDispositivoViewModel.GetTiposDispositivo();
+        await _empresasExternasViewModel.GetEmpresasExternas();
+
+        OpcionesEmpresasExternas.AddRange(_empresasExternasViewModel.EmpresasExternas
+        .Select(ee => new { Nombre = ee.Nombre, Identificador = ee.EmpresaExternaId })
+        .ToList());
+
+        OpcionesDepartamentos.AddRange(_departamentoViewModel.Departamentos
+        .Select(d => new { Nombre = d.Nombre, Identificador = d.DepartamentoId })
+        .ToList());
+
+        OpcionesTipo.AddRange(_tiposDispositivoViewModel.TiposDispositivo
+        .Select(t => new { Nombre = t.Nombre, Identificador = t.TipoDispositivoId })
+        .ToList());
+
+        OpcionesUsuarios.AddRange(_usuariosViewModel.Usuarios
+        .Select(u => new { NombreCompleto = u.Nombre + " " + u.Apellidos, Identificador = u.UsuarioId })
+        .ToList());
+
+        Spinner(false);
+    }
+
+    /// <summary>
+    /// Se asigna un usuario al dispositivo
+    /// </summary>
+    protected void AsignarUsuario()
+    {
+        DispositivoUsuario usuario = new();
+        if(_singleDispositivoViewModel.Usuarios == null)
+        {
+            _singleDispositivoViewModel.Usuarios = new List<DispositivoUsuario>();
+        }
+        _singleDispositivoViewModel.Usuarios.Add(usuario);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Elimina usuario asignado al dispositivo
+    /// </summary>
+    protected void EliminarUsuario(DispositivoUsuario usuario)
+    {
+        _singleDispositivoViewModel.Usuarios.Remove(usuario);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Pregunta si se quiere eliminar el usuario
+    /// </summary>
+    /// <param name="Usuario"></param>
+    /// <returns></returns>
+    protected async Task SeguroEliminarUsuario(DispositivoUsuario usuario)
+    {
+        var result = await _dialogService.OpenAsync("Eliminar usuario", ds =>
+    @<div>
+        <p class="mb-4">¿Estás seguro de eliminar el usuario?</p>
+        <div class="row">
+            <div class="col">
+                <RadzenButton Text="Eliminar" ButtonStyle="ButtonStyle.Danger" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;" />
+                <RadzenButton Text="Cancelar" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1" />
+            </div>
+        </div>
+    </div>);
+
+        if (result)
+        {
+            EliminarUsuario(usuario);
+        }
+    }
+
+    /// <summary>
+    /// Según de donde venga, se abre como nuevo o se carga un ticket para editar.
+    /// </summary>
+    /// <returns></returns>
+    protected async Task AccionDispositivo()
+    {
+        if (EsNuevo)
+        {
+            await NuevoDispositivo();
+        }
+        else
+        {
+            await ActualizarDispositivo();
+        }
+    }
+
+    /// <summary>
+    /// Actualiza el dispositivo actual
+    /// </summary>
+    /// <returns></returns>
+    protected async Task ActualizarDispositivo()
+    {
+        response = await _singleDispositivoViewModel.ActualizaDispositivo();
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            _singleDispositivoViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+            _singleDispositivoViewModel.Mensaje = "Dispositivo modificado correctamente.";
+            _navigationManager.NavigateTo($"Dispositivos");
+        }
+        else
+        {
+            _singleDispositivoViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+            _singleDispositivoViewModel.Mensaje = "Ha habido un error al modificar el dispositivo.";
+        }
+        _messageService.ShowNotification(_notificationService, "Dispositivo", _singleDispositivoViewModel.Mensaje, _singleDispositivoViewModel.NotificacionSeveridad);
+    }
+
+    /// <summary>
+    /// Crea un nuevo dispositivo
+    /// </summary>
+    protected async Task NuevoDispositivo()
+    {
+        response = await _singleDispositivoViewModel.NuevoDispositivo();
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+          _singleDispositivoViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+          _singleDispositivoViewModel.Mensaje = "Dispositivo añadido correctamente.";
+          _navigationManager.NavigateTo($"Dispositivos");
+        }
+        else
+        {
+          _singleDispositivoViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+          _singleDispositivoViewModel.Mensaje = "Ha habido un error al crear el dispositivo.";
+        }
+        _messageService.ShowNotification(_notificationService, "Dispositivo", _singleDispositivoViewModel.Mensaje, _singleDispositivoViewModel.NotificacionSeveridad);
+    }
+
+    /// <summary>
+    /// Elimina un dispositivo
+    /// </summary>
+    protected async Task EliminarDispositivo()
+    {
+        response = await _singleDispositivoViewModel.EliminarDispositivo();
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            _singleDispositivoViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+            _singleDispositivoViewModel.Mensaje = "Dispositivo eliminado correctamente.";
+            _navigationManager.NavigateTo($"Dispositivos");
+        }
+        else
+        {
+            _singleDispositivoViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+            _singleDispositivoViewModel.Mensaje = "Ha habido un error al eliminar el dispositivo.";
+        }
+        _messageService.ShowNotification(_notificationService, "Dispositivo", _singleDispositivoViewModel.Mensaje, _singleDispositivoViewModel.NotificacionSeveridad);
+    }
+
+    /// <summary>
+    /// Pregunta si se quiere eliminar el dispositivo
+    /// </summary>
+    /// <param name="Dispositivo"></param>
+    /// <returns></returns>
+    protected async Task SeguroEliminarDispositivo()
+    {
+        var result = await _dialogService.OpenAsync("Eliminar dispositivo", ds =>
+        @<div>
+            <p class="mb-4">¿Estás seguro de eliminar el dispositivo?</p>
+            <div class="row">
+                <div class="col">
+                    <RadzenButton Text="Eliminar" ButtonStyle="ButtonStyle.Danger" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;" />
+                    <RadzenButton Text="Cancelar" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1" />
+                </div>
+            </div>
+        </div>);
+
+        if (result)
+        {
+            await EliminarDispositivo();
+        }
+    }
+
+    /// <summary>
+    /// Botón para volver al listado
+    /// </summary>
+    protected void Cancelar()
+    {
+        _singleDispositivoViewModel.Anular();
+        _navigationManager.NavigateTo($"Dispositivos");
+    }
+
+    /// <summary>
+    /// Se muestra o no el spinner según si está cargado o no
+    /// </summary>
+    /// <param name="activo"></param>
+    private void Spinner(bool activo)
+    {
+        Loaded = activo ? false : true;
+    }
+}
+

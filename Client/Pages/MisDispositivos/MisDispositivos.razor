@@ -1,0 +1,98 @@
+﻿@page "/MisDispositivos"
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+
+@inject IDispositivoViewModel _dispositivoViewModel
+@inject ISettingsViewModel _settingsViewModel
+@inject NavigationManager _navigationManager
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+<AuthorizeView>
+    <Authorized>
+        <h2><b>Mis Dispositivos</b></h2>
+        <hr />
+    </Authorized>
+</AuthorizeView>
+@if (!Loaded)
+{
+    <div class="mt-4">
+        <div class="spinner"></div>
+    </div>
+}
+else
+{
+    <AuthorizeView>
+        <Authorized>
+            @if (_dispositivoViewModel.Dispositivos.Count > 0)
+            {
+                <RadzenDataList WrapItems="true" AllowPaging="true" Data="@_dispositivoViewModel.Dispositivos" TItem="Dispositivo" PageSize="10" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true">
+                    <Template Context="dispositivo">
+                        <RadzenCard Class="p-0 rounded-slg shadow-sm">
+                            <div>
+                                <div class="row">
+                                    <div class="col-lg-2 my-auto px-4">
+                                        <div class="my-auto mx-auto row">
+                                            <div class="col-md-12 col-lg-12">
+                                                <img class="rounded p-2 mx-auto" src="data:image/png;base64,@dispositivo.Tipo.Imagen" style="max-width: 50px; max-height: 50px;" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-10 p-4 my-auto">
+                                        <div class="row d-flex">
+                                            <div class="col-md-6 col-lg-3 my-auto">
+                                                <h5 class="p-1 font-weight-bold">
+                                                    @(dispositivo.Marca + " " + dispositivo.Modelo)
+                                                </h5>
+                                                <div class="p-1 text-muted">
+                                                    @(dispositivo.NumeroSerie)
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-lg-3 my-auto">
+                                                <p class="mb-sm-2 mb-lg-0 text-muted">@(dispositivo.Situacion)</p>
+                                            </div>
+                                            <div class="col-md-6 col-lg-3 my-auto">
+                                                <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text=@dispositivo.EmpresaExternaNombre />
+                                            </div>
+                                            <div class="col-md-6 col-lg-3 my-auto">
+                                                <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text=@dispositivo.DepartamentoNombre />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </RadzenCard>
+                    </Template>
+                </RadzenDataList>
+            }
+            else
+            {
+                <h5 class="text-center text-muted">No tienes ningún dispositivo asociado.</h5>
+            }
+        </Authorized>
+        <NotAuthorized>
+            <h5>Debes iniciar sesión para acceder al contenido.</h5>
+        </NotAuthorized>
+    </AuthorizeView>
+}
+
+@code {
+
+    private bool Loaded { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Spinner(true);
+            await _dispositivoViewModel.GetMisDispositivos();
+        Spinner(false);
+    }
+
+    /// <summary>
+    /// Se muestra o no el spinner según si está cargado o no
+    /// </summary>
+    /// <param name="activo"></param>
+    private void Spinner(bool activo)
+    {
+        Loaded = activo ? false : true;
+    }
+}
+

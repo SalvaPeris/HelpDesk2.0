@@ -1,0 +1,368 @@
+﻿@page "/Usuarios/{identificador}"
+@using HelpDesk.ViewModels
+@using System.Net
+
+@inject ISingleUsuarioViewModel _singleUsuarioViewModel
+@inject IDepartamentoViewModel _departamentoViewModel
+@inject DialogService _dialogService
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+@inject NavigationManager _navigationManager
+@inject IMainViewModel _mainViewModel
+
+<AuthorizeView Policy="EsAdministradorRecursos Humanos">
+    <Authorized>
+        @if (identificador == "0")
+        {
+            <h2><b>Nuevo Usuario</b></h2>
+            <hr />
+        }
+        else
+        {
+            <h2><b>Editar Usuario</b></h2>
+            <hr />
+        }
+
+        @if (_singleUsuarioViewModel.UsuarioId.ToString() != identificador && identificador != "0")
+        {
+            <div class="spinner"></div>
+        }
+        else
+        {
+            @if (!Loaded)
+             {
+                <div class="mt-4">
+                    <div class="spinner"></div>
+                </div>
+             }
+             else
+             {
+                <EditForm Model="_singleUsuarioViewModel" OnValidSubmit="@AccionUsuario">
+                    <ChildContent Context="Crear">
+                        <div class="col-10">
+                            <div class="form-group row">
+                                <div class="col-md-8">
+                                    <label class="col-md-4 col-form-label">DNI</label>
+                                    <RadzenTextBox @bind-Value="_singleUsuarioViewModel.Identificador" Class="w-100" Placeholder="DNI / NIE" Disabled="!EsNuevo" />
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="col-md-4 col-form-label">Nombre</label>
+                                    <RadzenTextBox @bind-Value="_singleUsuarioViewModel.Nombre" Class="w-100" Placeholder="Nombre" />
+                                    <label class="col-md-8 col-form-label">Apellidos</label>
+                                    <RadzenTextBox @bind-Value="_singleUsuarioViewModel.Apellidos" Class="w-100" Placeholder="Apellidos" />
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="col-md-10 p-2">
+                                        @if (_singleUsuarioViewModel.FotoPerfil != null)
+                                            {
+                                            <img class="rounded" src="data:image/png;base64,@_singleUsuarioViewModel.FotoPerfil" style="max-width: 100px; max-height: 100px;" />
+                                            }
+                                            else
+                                            {
+                                            <img class="rounded" src="/images/default-perfil.png" style="max-width: 100px; max-height: 100px;" />
+                                            }
+                                    </div>
+                                    <div class="input-group">
+                                        <div class="custom-file">
+                                            <InputFile class="custom-file-input" multiple OnChange="SubirImagen" accept="image/png, image/jpeg, image/gif" id="inputFile" />
+                                            <label class="custom-file-label" for="inputFile">Subir imagen</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-8 col-form-label">Email</label>
+                                <label class="col-md-4 col-form-label">Extensión</label>
+                                <div class="col-md-8">
+                                    <RadzenTextBox @bind-Value="_singleUsuarioViewModel.Email" Class="w-100" Placeholder="Correo electrónico" />
+                                </div>
+                                <div class="col-md-4">
+                                    <RadzenTextBox @bind-Value="_singleUsuarioViewModel.Extension" Class="w-100" Placeholder="Extensión" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-12 col-form-label">Contraseña</label>
+                                <div class="col-md-8">
+                                    <RadzenTextBox @bind-Value="_singleUsuarioViewModel.Contrasena" Class="w-100" Placeholder="Contraseña" type="@TypeText" />
+                                </div>
+                                <div class="col-md-4 my-auto">
+                                    <a href="javascript:void(0)" @onclick=HideShowPassword><span class="material-icons text-muted">visibility</span></a>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-12 col-form-label">Departamento</label>
+                                <div class="col-md-10">
+                                    <RadzenDropDown AllowClear="true" TValue="long" AllowVirtualization="true" Class="w-100"
+                                                    AllowFiltering="true" Data=@OpcionesDepartamentos @bind-Value="_singleUsuarioViewModel.DepartamentoId" TextProperty="Nombre" ValueProperty="DepartamentoId" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-6 col-form-label">Teléfono principal</label>
+                                <label class="col-md-6 col-form-label">Teléfono alternativo</label>
+                                <div class="col-md-6">
+                                    <RadzenTextBox @bind-Value="_singleUsuarioViewModel.Telefono" Class="w-100" Placeholder="Teléfono principal" />
+                                </div>
+                                <div class="col-md-6">
+                                    <RadzenTextBox @bind-Value="_singleUsuarioViewModel.Telefono2" Class="w-100" Placeholder="Teléfono alternativo" />
+                                </div>
+                            </div>
+                            <div class="col-md-3 my-3">
+                                <RadzenCheckBox @bind-Value="EsAdministrador" Name="CheckAdministrador" TValue="bool" Change="CambioAdministrador" />
+                                <RadzenLabel Text="Administrador" Component="CheckAdministrador" Style="margin-left: 8px; vertical-align: middle;" />
+                            </div>
+                            <div class="col-md-3 my-3">
+                                <RadzenCheckBox @bind-Value="EsSuperAdministrador" Name="CheckSuperAdministrador" TValue="bool" Disabled="true" />
+                                <RadzenLabel Text="SuperAdministrador" Component="CheckSuperAdministrador" Style="margin-left: 8px; vertical-align: middle;" />
+                            </div>
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+                            <div class="col-md-12 my-3 row">
+                                <div class="col-md-8 text-left">
+                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar" Style="width: 120px" />
+                                    <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text="Volver" Click="Cancelar" Style="width: 120px" />
+                                </div>
+                                @if (identificador != "0")
+                                    {
+                                    <div class="col-md-4 text-right">
+                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Text="Eliminar" Click="SeguroEliminarUsuario" Style="width: 120px" />
+                                    </div>
+                                    }
+                            </div>
+                        </div>
+                    </ChildContent>
+                </EditForm>
+             }
+        }
+        </Authorized>
+    <NotAuthorized>
+        <h5>No estás autorizado para acceder al contenido.</h5>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+    [Parameter]
+    public string identificador { get; set; }
+
+    private bool HideShow { get; set; } = true;
+    private bool EsAdministrador { get; set; } = false;
+    private bool EsSuperAdministrador { get; set; } = false;
+    private bool EsNuevo { get; set; } = true;
+    private bool Loaded { get; set; } = true;
+
+    List<object> OpcionesDepartamentos = new List<object>();
+
+    private string TypeText { get; set; } = "password";
+    public string DepartamentoId { get; set; }
+    private HttpResponseMessage response;
+
+    private void CambioAdministrador()
+    {
+        if (EsAdministrador)
+        {
+            _singleUsuarioViewModel.Rol = "Administrador";
+        }
+        else
+        {
+            _singleUsuarioViewModel.Rol = "Usuario";
+        }
+    }
+
+    private void HideShowPassword()
+    {
+        if (HideShow)
+        {
+            TypeText = "text";
+        }
+        else
+        {
+            TypeText = "password";
+        }
+        HideShow = !HideShow;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Spinner(true);
+
+        if (identificador != "0")
+        {
+            await _singleUsuarioViewModel.GetPerfil(identificador);
+            EsNuevo = false;
+        }
+        else
+        {
+            _singleUsuarioViewModel.Anular();
+        }
+
+        await _departamentoViewModel.GetDepartamentos();
+
+        OpcionesDepartamentos.AddRange(_departamentoViewModel.Departamentos.ToList());
+
+        if (_singleUsuarioViewModel.Rol == "Administrador")
+        {
+            EsAdministrador = true;
+        }
+        else if (_singleUsuarioViewModel.Rol == "SuperAdministrador")
+        {
+            EsSuperAdministrador = true;
+        }
+
+        Spinner(false);
+
+    }
+
+    /// <summary>
+    /// Según de donde venga, se abre como nuevo o se carga un ticket para editar.
+    /// </summary>
+    /// <returns></returns>
+    protected async Task AccionUsuario()
+    {
+        if (EsNuevo)
+        {
+            await NuevoUsuario();
+        }
+        else
+        {
+            await ActualizarUsuario();
+        }
+    }
+
+    /// <summary>
+    /// Crea un nuevo usuario
+    /// </summary>
+    protected async Task NuevoUsuario()
+    {
+        if (EsAdministrador)
+        {
+            _singleUsuarioViewModel.Rol = "Administrador";
+        }
+        else
+        {
+            _singleUsuarioViewModel.Rol = "Usuario";
+        }
+
+        response = await _singleUsuarioViewModel.NuevoUsuario();
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            _singleUsuarioViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+            _singleUsuarioViewModel.Mensaje = "Usuario añadido correctamente.";
+            _navigationManager.NavigateTo($"Usuarios");
+        }
+        else
+        {
+            _singleUsuarioViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+            _singleUsuarioViewModel.Mensaje = "Ha habido un error al crear el usuario.";
+        }
+        _messageService.ShowNotification(_notificationService, _singleUsuarioViewModel.Mensaje, _singleUsuarioViewModel.NotificacionSeveridad);
+    }
+
+    /// <summary>
+    /// Actualiza un usuario
+    /// </summary>
+    protected async Task ActualizarUsuario()
+    {
+        if (EsAdministrador)
+        {
+            _singleUsuarioViewModel.Rol = "Administrador";
+        }
+        else
+        {
+            _singleUsuarioViewModel.Rol = "Usuario";
+        }
+
+        response = await _singleUsuarioViewModel.ActualizarUsuario();
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            _singleUsuarioViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+            _singleUsuarioViewModel.Mensaje = "Usuario actualizado correctamente.";
+            _navigationManager.NavigateTo($"Usuarios");
+        }
+        else
+        {
+            _singleUsuarioViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+            _singleUsuarioViewModel.Mensaje = "Ha habido un error al actualizar el usuario.";
+        }
+        _messageService.ShowNotification(_notificationService, _singleUsuarioViewModel.Mensaje, _singleUsuarioViewModel.NotificacionSeveridad);
+    }
+
+    /// <summary>
+    /// Elimina un usuario
+    /// </summary>
+    protected async Task EliminarUsuario()
+    {
+        response = await _singleUsuarioViewModel.EliminarUsuario();
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            _singleUsuarioViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+            _singleUsuarioViewModel.Mensaje = "Usuario eliminado correctamente.";
+            _navigationManager.NavigateTo($"Usuarios");
+        }
+        else
+        {
+            _singleUsuarioViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+            _singleUsuarioViewModel.Mensaje = "Ha habido un error al eliminar el usuario.";
+        }
+        _messageService.ShowNotification(_notificationService, _singleUsuarioViewModel.Mensaje, _singleUsuarioViewModel.NotificacionSeveridad);
+    }
+
+    /// <summary>
+    /// Pregunta si se quiere eliminar el usuario
+    /// </summary>
+    /// <param name="Usuario"></param>
+    /// <returns></returns>
+    protected async Task SeguroEliminarUsuario()
+    {
+        var result = await _dialogService.OpenAsync("Eliminar usuario", ds =>
+        @<div>
+            <p class="mb-4">¿Estás seguro de eliminar el usuario?</p>
+            <div class="row">
+                <div class="col">
+                    <RadzenButton Text="Eliminar" ButtonStyle="ButtonStyle.Danger" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;" />
+                    <RadzenButton Text="Cancelar" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1" />
+                </div>
+            </div>
+        </div>);
+
+        if (result)
+        {
+            await EliminarUsuario();
+        }
+    }
+
+    protected void Cancelar()
+    {
+        _singleUsuarioViewModel.Anular();
+        _navigationManager.NavigateTo($"Usuarios");
+    }
+
+    async Task SubirImagen(InputFileChangeEventArgs e)
+    {
+        var files = e.GetMultipleFiles();
+        foreach (var file in files)
+        {
+            var resizedFile = await file.RequestImageFileAsync(file.ContentType, 800, 600);
+            var buf = new byte[resizedFile.Size];
+            using (var stream = resizedFile.OpenReadStream())
+            {
+                await stream.ReadAsync(buf);
+            }
+            _singleUsuarioViewModel.FotoPerfil = Convert.ToBase64String(buf);
+        }
+    }
+
+    /// <summary>
+    /// Se muestra o no el spinner según si está cargado o no
+    /// </summary>
+    /// <param name="activo"></param>
+    private void Spinner(bool activo)
+    {
+        Loaded = activo ? false : true;
+    }
+}
+
+@functions {
+}

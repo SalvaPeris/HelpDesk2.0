@@ -1,0 +1,420 @@
+﻿@page "/Chat"
+
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.JSInterop
+
+@inject IJSRuntime JS
+@inject IUsuariosChatViewModel _usuariosChatViewModel
+@inject IMainViewModel _mainViewModel
+@inject IGrupoChatViewModel _grupoChatViewModel
+@inject ISettingsViewModel _settingsViewModel
+@inject NavigationManager _navigationManager
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+
+@implements IDisposable
+
+<AuthorizeView>
+    <Authorized>
+        <div class="row">
+            <div class="col-md-12">
+                <h2><b>@Titulo</b></h2>
+            </div>
+        </div>
+        <hr />
+
+    </Authorized>
+</AuthorizeView>
+@if (!Loaded)
+{
+    <div class="mt-4">
+        <div class="spinner">@EstadoConexion</div>
+    </div>
+}
+else
+{
+    <AuthorizeView>
+        <Authorized>
+            <div class="row">
+                <div class="col-8">
+                    <RadzenDataList Style="overflow: scroll; height: 30rem" @ref="MensajesDataList" WrapItems="true" AllowPaging="false" Data="@_grupoChatViewModel.GrupoChat.Mensajes" TItem="MensajeChat" PageSize="8" PagerPosition="PagerPosition.Top" PagerHorizontalAlign="HorizontalAlign.Center" ShowPagingSummary="true">
+                        <Template Context="mensaje">
+                            @mensaje.Mensaje
+                            @if (mensaje.CreadoPor == null)
+                            {
+                                @mensaje.Mensaje
+                                <br />
+                            }
+                            else
+                            {
+                                if (mensaje.CreadoPor.Identificador == _mainViewModel.Identificador)
+                                {
+                                    <RadzenCard Class="col-12 p-0 text-right bg-success rounded-slg shadow-sm text-white">
+                                        <div class="py-2 px-4">
+                                            @mensaje.Mensaje
+                                        </div>
+                                    </RadzenCard>
+                                }
+                                else if (mensaje.CreadoPor.Nombre == "Sistema")
+                                {
+                                    @mensaje.Mensaje
+                                    <br />
+                                }
+                                else
+                                {
+                                    <RadzenCard Class="col-12 p-0 rounded-slg shadow-sm">
+                                        <div class="py-2 px-4">
+                                            <div class="row">
+                                                <div class="col-md-1 col-lg-1 my-auto">
+                                                    @if (mensaje.CreadoPor.FotoPerfil != null)
+                                                    {
+                                                        <img class="rounded mx-auto" src="data:image/png;base64,@mensaje.CreadoPor.FotoPerfil" style="max-width: 30px; max-height: 30px;" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <img class="rounded mx-auto" src="/images/default-perfil.png" style="max-width: 30px; max-height: 30px;" />
+                                                    }
+                                                </div>
+                                                <div class="col-md-2 col-lg-2 my-auto">
+                                                    <div class="font-weight-bold">@(mensaje.CreadoPor.Nombre)</div>
+                                                </div>
+                                                <div class="col-md-8 col-lg-8 my-auto">
+                                                    @mensaje.Mensaje
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </RadzenCard>
+                                }
+                            }
+                        </Template>
+                    </RadzenDataList>
+                    <div class="row">
+                        <div class="col-10">
+                            <div class="form-group">
+                                <RadzenTextArea @bind-Value="messageInput" Class="w-100" Placeholder="Escribe un mensaje..." @onkeyup="@PulsarEnter" />
+                            </div>
+                        </div>
+                        <div class="col-2">
+                            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Icon="send" Click=Send Class="w-100" Disabled="@(!EstaConectado || _grupoChatViewModel.GrupoChat == null ? true : false)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4 overflow-scroll">
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <RadzenButton Click=@(()=> { UsuariosOGrupos = UsuariosGrupos.Usuarios; StateHasChanged(); }) Text="Usuarios" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Medium" Class="h5" />
+                        </div>
+                        <div class="col-6 text-center">
+                            <RadzenButton Click=@(() => { UsuariosOGrupos = UsuariosGrupos.Grupos; StateHasChanged(); }) Text="Grupos" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Medium" Class="h5" />
+                        </div>
+                    </div>
+
+                    @if (UsuariosOGrupos == UsuariosGrupos.Usuarios)
+                    {
+                        <RadzenDataList WrapItems="true" AllowPaging="true" Data="@_usuariosChatViewModel.Usuarios" TItem="UsuarioChat" PageSize="10" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true">
+                            <Template Context="usuario">
+                                <RadzenCard Class="p-0 rounded-slg">
+                                    <div class="row">
+                                        <div class="col-lg-12 px-4 product-title">
+                                            <div class="my-auto row">
+                                                <div class="col-md-2 col-lg-2 my-auto py-1">
+                                                    @if (usuario.FotoPerfil != null)
+                                                    {
+                                                        <img class="rounded mx-auto py-1" src="data:image/png;base64,@usuario.FotoPerfil" style="max-width: 30px; max-height: 30px;" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <img class="rounded mx-auto py-1" src="/images/default-perfil.png" style="max-width: 30px; max-height: 30px;" />
+                                                    }
+                                                </div>
+                                                <div class="col-md-8 col-lg-8 my-auto text-dark h6 font-weight-bold py-1">
+                                                    <a href="javascript:void(0)" @onclick="@(args => SetChat(usuario.UsuarioId, usuario.Nombre + " " + usuario.Apellidos))"><h6 class="mb-0 font-weight-bold">@(usuario.Nombre) @(usuario.Apellidos)</h6></a>
+                                                </div>
+                                                <div class="col-md-2 col-lg-2 py-1 my-auto">
+                                                    @*@if (usuario.EstaConectado)
+                                                    {
+                                                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="C" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="D" />
+                                                    }*@
+                                                    @if (usuario.MensajesSinLeer > 0)
+                                                    {
+                                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text=@usuario.MensajesSinLeer.ToString() />
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </RadzenCard>
+                            </Template>
+                        </RadzenDataList>
+                    }
+                    else
+                    {
+                        <RadzenDataList WrapItems="true" AllowPaging="true" Data="@_usuariosChatViewModel.Grupos" TItem="GrupoChat" PageSize="10" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true">
+                            <Template Context="grupo">
+                                <RadzenCard Class="p-0 rounded-slg">
+                                    <div class="row">
+                                        <div class="col-lg-12 px-4 product-title">
+                                            <div class="row">
+                                                <div class="col-md-2 col-lg-2 my-auto py-1">
+                                                    <img class="rounded mx-auto" src="/images/default-perfil.png" style="max-width: 30px; max-height: 30px;" />
+                                                </div>
+                                                <div class="col-md-7 col-lg-7 my-auto text-dark h6 font-weight-bold py-1">
+                                                    <a href="javascript:void(0)" @onclick="@(args => SetChatGrupal(grupo.GrupoChatId))"><h6 class="mb-0 font-weight-bold">@(grupo.Titulo)</h6></a>
+                                                </div>
+                                                <div class="col-md-3 col-lg-3 py-1 my-auto">
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary " Text=@(grupo.CuentaUsuarios.ToString() + " pers.") />
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text=@grupo.MensajesSinLeer.ToString() />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </RadzenCard>
+                            </Template>
+                        </RadzenDataList>
+                    }
+
+                </div>
+            </div>
+
+        </Authorized>
+        <NotAuthorized>
+            <h5>Debes iniciar sesión para acceder al contenido.</h5>
+        </NotAuthorized>
+    </AuthorizeView>
+}
+
+@code {
+
+    private bool Loaded { get; set; } = true;
+
+    private string Titulo { get; set; } = "Chat";
+    private string EstadoConexion { get; set; }
+    private int CuentaPaginas { get; set; } = 0;
+    private UsuariosGrupos UsuariosOGrupos { get; set; } = UsuariosGrupos.Usuarios;
+    private GruposChat GruposChat { get; set; }
+
+    private List<string> messages = new List<string>();
+    RadzenDataList<MensajeChat> MensajesDataList;
+    private string messageInput;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Spinner(true);
+
+        await CheckChatAsync();
+        await _usuariosChatViewModel.GetGrupos();
+        _grupoChatViewModel.EstadoPantallaChat = EstadoChat.DentroChat;
+
+        Spinner(false);
+    }
+
+    private async Task CheckChatAsync()
+    {
+        if (_usuariosChatViewModel.HubConnection == null)
+        {
+            await _usuariosChatViewModel.CrearHubConnection(_navigationManager.ToAbsoluteUri("/chathub"));
+            await ConectarChat();
+
+            _usuariosChatViewModel.HubConnection.On<string>("ReceiveNotification", async (message) =>
+            {
+                var mensajeChat = new MensajeChat
+                {
+                    Mensaje = message,
+                    CreadoPor = new Usuario
+                    {
+                        Nombre = "Sistema"
+                    }
+                };
+                await Refrescar(mensajeChat);
+            });
+
+            _usuariosChatViewModel.HubConnection.On<GruposChat>("NewGroup", (grupos) =>
+            {
+                _usuariosChatViewModel.Usuarios = grupos.Usuarios;
+                _usuariosChatViewModel.Grupos = grupos.Grupos;
+            });
+        }
+        else if (_usuariosChatViewModel.HubConnection.State == HubConnectionState.Disconnected)
+        {
+            await _usuariosChatViewModel.HubConnection.StartAsync();
+        }
+        else
+        {
+            _grupoChatViewModel.GrupoChat.Mensajes.Clear();
+
+            if(_usuariosChatViewModel.EventChatHandler != null)
+            {
+                _usuariosChatViewModel.EventChatHandler.Dispose();
+            }
+
+            _usuariosChatViewModel.EventChatHandler = _usuariosChatViewModel.HubConnection.On<MensajeChat>("ReceiveMessage", async (mensajeChat) =>
+            {
+                if (_grupoChatViewModel.EstadoPantallaChat == EstadoChat.DentroChat && _grupoChatViewModel.GrupoChat.GrupoChatId == mensajeChat.GrupoChatId)
+                {
+                    await Refrescar(mensajeChat);
+                }
+                else
+                {
+                    _messageService.ShowNotification(_notificationService, mensajeChat.CreadoPor.Nombre + " " + mensajeChat.CreadoPor.Apellidos + " dice ", mensajeChat.Mensaje, NotificationSeverity.Success);
+                }
+
+            });
+        }
+    }
+
+    private async Task Refrescar(MensajeChat mensajeChat)
+    {
+        _grupoChatViewModel.GrupoChat.Mensajes.Add(mensajeChat);
+       await MensajesDataList.FirstPage();
+        StateHasChanged();
+        ScrollToEnd();
+    }
+
+    private async Task ConectarChat()
+    {
+        if (_usuariosChatViewModel.HubConnection is not null)
+        {
+            await _usuariosChatViewModel.ConectarUsuario();
+        }
+    }
+
+    protected async Task GetGrupos()
+    {
+        await _usuariosChatViewModel.GetGrupos();
+        StateHasChanged();
+    }
+
+    private async Task Connect()
+    {
+        Spinner(true);
+        while (_usuariosChatViewModel.HubConnection is null)
+        {
+            EstadoConexion = "Conectando...";
+        }
+
+        if (_usuariosChatViewModel.HubConnection is not null)
+        {
+            await _usuariosChatViewModel.ConectarUsuario();
+        }
+        Spinner(false);
+    }
+
+    private async Task Send()
+    {
+        if (_usuariosChatViewModel.HubConnection is not null && !messageInput.Equals(String.Empty))
+        {
+            MensajeChat mensajeChat = new MensajeChat
+            {
+                Mensaje = messageInput,
+                CreadoPor = new Usuario() { Identificador = _mainViewModel.Identificador }
+            };
+
+            messageInput = null;
+            await _grupoChatViewModel.NuevoMensaje(mensajeChat);
+            await MensajesDataList.FirstPage();
+            StateHasChanged();
+            ScrollToEnd();
+        }
+    }
+
+    private async Task SetChat(Guid usuarioId, string nombreCompleto)
+    {
+        if (_usuariosChatViewModel.HubConnection is not null)
+        {
+            await _grupoChatViewModel.GetHistorialChat(usuarioId);
+            Titulo = "Chat con " + nombreCompleto;
+            StateHasChanged();
+            ScrollToEnd();
+        }
+    }
+
+    private async Task SetChatGrupal(Guid grupoId)
+    {
+        if (_usuariosChatViewModel.HubConnection is not null)
+        {
+            await _grupoChatViewModel.GetHistorialChatGrupal(grupoId);
+            Titulo = "Chat";
+            StateHasChanged();
+            ScrollToEnd();
+        }
+    }
+
+    /*private async Task BuscarUsuarioPorLetra(string value)
+    {
+        Spinner(true);
+        _settingsViewModel.EstadoNavegacion = "Agenda";
+        Letra = "Resultados para nombres que empiezan por " + value;
+        await _agendaViewModel.BuscarUsuarioPorLetra(value);
+
+        Spinner(false);
+    }*/
+
+    public bool EstaConectado =>
+        _usuariosChatViewModel.HubConnection?.State == HubConnectionState.Connected;
+
+    /// <summary>
+    /// Desconectar Usuario
+    /// </summary>
+    /// <returns></returns>
+    public async Task Desconectar()
+    {
+        if (_usuariosChatViewModel.HubConnection is not null)
+        {
+            await _usuariosChatViewModel.DesconectarUsuario();
+            await _usuariosChatViewModel.HubConnection.DisposeAsync();
+            _usuariosChatViewModel.HubConnection = null;
+        }
+    }
+
+    /// <summary>
+    /// Evento al pulsar Enter
+    /// </summary>
+    /// <param name="e"></param>
+    private async Task PulsarEnter(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            if (messageInput != null)
+            {
+                await Send();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Se muestra o no el spinner según si está cargado o no
+    /// </summary>
+    /// <param name="activo"></param>
+    private void Spinner(bool activo)
+    {
+        Loaded = activo ? false : true;
+    }
+
+
+    public void Dispose()
+    {
+        _grupoChatViewModel.EstadoPantallaChat = EstadoChat.FueraChat;
+    }
+
+    private enum UsuariosGrupos
+    {
+        Usuarios,
+        Grupos
+    }
+
+}
+
+@functions{
+
+    private void ScrollToEnd()
+    {
+        JS.InvokeVoidAsync("scrollToEnd", new object[] { MensajesDataList.Element });
+    }
+}

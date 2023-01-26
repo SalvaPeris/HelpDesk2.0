@@ -1,0 +1,243 @@
+﻿@page "/Jornadas"
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+
+@inject ISingleJornadaViewModel _singleJornadaViewModel
+@inject IJornadasViewModel _jornadasViewModel
+@inject NavigationManager _navigationManager
+@inject MessageService _messageService
+@inject DialogService _dialogService
+@inject NotificationService _notificationService
+
+<AuthorizeView>
+    <Authorized>
+        <div class="row">
+            <div class="col-lg-6 text-left">
+                <h2><b>Jornadas</b></h2>
+            </div>
+            <div class="col-lg-6 text-right">
+                <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text="Añadir jornada" Icon="add_circle_outline" Click="NuevaJornada" Style="width: 200px" />
+            </div>
+        </div>
+        <hr />
+    </Authorized>
+</AuthorizeView>
+@if (!Loaded)
+{
+    <div class="mt-4">
+        <div class="spinner"></div>
+    </div>
+}
+else
+{
+    <AuthorizeView>
+        <Authorized>
+            @*<div class="col-lg-2">
+                    <RadzenDropDown AllowClear="true" TValue="string" Class="w-100"
+                                    Data=@monthNames
+                                    Change=@(args => LoadCalendar()) />
+                </div>
+                <div class="col-lg-2">
+                    <RadzenDropDown AllowClear="true" TValue="string" Class="w-100"
+                                    Data=@monthNames
+                                    Change=@(args => LoadCalendar()) />
+                </div>*@
+            <div class="row m-4">
+                <div class="col-lg-4 text-center font-weight-bold">
+                    <RadzenButton Click=@(args => LoadDays(false)) ButtonStyle="ButtonStyle.Light" Icon="chevron_left" Class="text-left" />
+                </div>
+                <div class="h4 col-lg-4 text-center font-weight-bold my-auto text-muted">
+                    <RadzenLabel Text=@StartDate.ToString("MMMM yyyy").ToUpper() Style="margin-left: 8px; margin-right: 8px; vertical-align: middle;" />
+                </div>
+                <div class="col-lg-4 text-center font-weight-bold">
+                    <RadzenButton Click=@(args => LoadDays(true)) ButtonStyle="ButtonStyle.Light" Icon="navigate_next" />
+                </div>
+            </div>
+            <div class="bg-white rounded-slg">
+                <table class="table table-bordered shadow-sm" style=" border-radius: 1em; overflow: hidden;">
+                    <thead class="text-muted thead-light">
+                        <tr>
+                            <th class="col-lg-3">
+                                Usuario
+                            </th>
+                            @for (var dayIndex = 0; dayIndex < Days.Count(); dayIndex++)
+                            {
+                                if (Days[dayIndex].DayOfWeek == DayOfWeek.Saturday || Days[dayIndex].DayOfWeek == DayOfWeek.Sunday)
+                                {
+                                    <th class="col-lg-1">
+                                        @Days[dayIndex].ToString("ddd d")
+                                    </th>
+                                }
+                                else
+                                {
+                                    <th class="col-lg-1">
+                                        @Days[dayIndex].ToString("ddd d")
+                                    </th>
+                                }
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var group in _jornadasViewModel.Jornadas.GroupBy(s => new { s.UsuarioNombreCompleto, s.ImagenUsuario }))
+                        {
+                            <tr>
+                                <td class="col-lg-4 my-auto">
+                                    <div class="row mx-auto">
+                                        <div class="col-lg-3 my-auto">
+                                            @if (group.Key.ImagenUsuario != null)
+                                            {
+                                                <img class="rounded" src="data:image/png;base64,@group.Key.ImagenUsuario" style="max-width: 50px; max-height: 50px;" />
+                                            }
+                                            else
+                                            {
+                                                <img class="rounded" src="/images/default-perfil.png" style="max-width: 50px; max-height: 50px;" />
+                                            }
+                                        </div>
+                                        <div class="col-lg-9 my-auto">
+                                            @(group.Key.UsuarioNombreCompleto)
+                                        </div>
+                                    </div>
+                                </td>
+                                @for (var dayIndex = 0; dayIndex < Days.Count(); dayIndex++)
+                                {
+                                    bool existe = false;
+                                    @foreach (var jornada in group)
+                                    {
+                                        @if (jornada.FechaJornada.DayOfYear == Days[dayIndex].DayOfYear)
+                                        {
+                                            <td class="col-md-1 col-lg-1 my-auto text-center">
+                                                @foreach (var fichaje in jornada.Fichajes)
+                                                {
+                                                    <div class="p-0 font-weight-bold">
+                                                        @(fichaje.HoraEntrada?.ToString("HH:mm"))
+                                                    </div>
+                                                    <div class="p-0 font-weight-bold">
+                                                        @(fichaje.HoraSalida?.ToString("HH:mm"))
+                                                    </div>
+                                                    <br />
+                                                }
+
+                                                @foreach (var ausencia in jornada.Ausencias)
+                                                {
+                                                    <div class="p-0 text-danger font-weight-bold">
+                                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@(ausencia.Ausencia.TipoAusencia.NombreAusencia)" />
+                                                    </div>
+                                                }
+                                            </td>
+                                            existe = true;
+                                        }
+                                    }
+
+                                    if (!existe)
+                                    {
+                                        <td></td>
+                                    }
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </Authorized>
+        <NotAuthorized>
+            <h5>Debes iniciar sesión para acceder al contenido.</h5>
+        </NotAuthorized>
+    </AuthorizeView>
+}
+
+@code {
+
+    private bool Loaded { get; set; } = true;
+
+    List<DateTime> Days = new List<DateTime>();
+    DateTime StartDate = new();
+    DateTime EndDate = new();
+    int MonthIndex { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Loaded = Shared.Funciones.Spinner(true);
+        await _jornadasViewModel.GetJornadasPorDepartamento(1);
+        StartDate = DateTime.Now;
+        StartDate = Shared.DateTimeExtensions.StartOfWeek(StartDate, DayOfWeek.Monday);
+        EndDate = StartDate.AddDays(6);
+
+        GenerarCalendarioCabecera();
+
+        Loaded = Shared.Funciones.Spinner(false);
+    }
+
+    /// <summary>
+    /// Inicia el fichaje de hoy
+    /// </summary>
+    private void NuevoFichaje()
+    {
+        /*_settingsViewModel.GetLocalizacion();
+        _fichajeViewModel.FichajeActual.LocalizacionEntrada = _settingsViewModel.Localizacion;
+        _fichajeViewModel.FichajeActual.HoraEntrada = Shared.Funciones.GetDateTimeNow();
+        _fichajeViewModel.FichajeActual.FuenteEntrada = "PC";
+
+        _fichajeViewModel.NuevoFichaje();*/
+    }
+
+    /// <summary>
+    /// Finaliza el fichaje de hoy
+    /// </summary>
+    private void FinalizaFichaje()
+    {
+        /*_settingsViewModel.GetLocalizacion();
+        _fichajeViewModel.FichajeActual.LocalizacionSalida = _settingsViewModel.Localizacion;
+        _fichajeViewModel.FichajeActual.HoraSalida = Shared.Funciones.GetDateTimeNow();
+        _fichajeViewModel.FichajeActual.FuenteSalida = "PC";
+
+        _fichajeViewModel.FinalizaFichaje();*/
+    }
+
+    /// <summary>
+    /// Dialog para añadir nueva jornada
+    /// </summary>
+    /// <returns></returns>
+    public async Task NuevaJornada()
+    {
+        _singleJornadaViewModel.Anular();
+        Jornada jornada = new();
+        await _dialogService.OpenAsync<SingleJornada>("Nueva Jornada",
+        new Dictionary<string, object>() { { "Jornada", jornada } },
+        new DialogOptions() { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+    }
+
+
+    /// <summary>
+    /// Carga los días
+    /// </summary>
+    /// <param name="MasMenos"></param>
+    private void LoadDays(bool MasMenos)
+    {
+        if (MasMenos)
+        {
+            StartDate = StartDate.AddDays(7);
+        }
+        else
+        {
+            StartDate = StartDate.AddDays(-7);
+        }
+
+        EndDate = StartDate.AddDays(6);
+
+        GenerarCalendarioCabecera();
+    }
+
+    /// <summary>
+    /// Carga la cabecera del Calendario
+    /// </summary>
+    private void GenerarCalendarioCabecera()
+    {
+        var Day1 = new List<DateTime>();
+        for (var dt = StartDate; dt <= EndDate; dt = dt.AddDays(1))
+        {
+            Day1.Add(dt);
+        }
+        Days = Day1.ToList();
+    }
+}

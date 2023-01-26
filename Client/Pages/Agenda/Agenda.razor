@@ -1,0 +1,171 @@
+﻿@page "/Agenda"
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+
+@inject IAgendaViewModel _agendaViewModel
+@inject ISettingsViewModel _settingsViewModel
+@inject NavigationManager _navigationManager
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+
+<AuthorizeView>
+    <Authorized>
+        <div class="row">
+            <div class="col-md-9">
+                <h2><b>Agenda</b></h2>
+            </div>
+            <div class="col-md-3 text-right">
+                <RadzenTextBox @oninput=@(args => BuscarUsuario(args.Value.ToString())) Placeholder="Buscar..." Style="width: 100%;"/>
+            </div>
+        </div>
+        <hr />
+        <div class="row mb-4">
+            <span class="mx-auto my-auto" style="font-size: xx-small;">
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("A")) Text="A" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("B")) Text="B" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("C")) Text="C" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("D")) Text="D" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("E")) Text="E" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("F")) Text="F" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("G")) Text="G" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("H")) Text="H" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("I")) Text="I" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("J")) Text="J" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("K")) Text="K" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("L")) Text="L" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("M")) Text="M" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("N")) Text="N" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("O")) Text="O" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("P")) Text="P" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("Q")) Text="Q" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("R")) Text="R" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("S")) Text="S" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("T")) Text="T" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("U")) Text="U" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("V")) Text="V" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("W")) Text="W" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("X")) Text="X" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("Y")) Text="Y" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+                <RadzenButton Click=@(args => BuscarUsuarioPorLetra("Z")) Text="Z" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"/>
+            </span>
+        </div>
+    </Authorized>
+</AuthorizeView>
+@if (!Loaded)
+{
+    <div class="mt-4">
+        <div class="spinner"></div>
+    </div>
+}
+else
+{
+    <AuthorizeView>
+        <Authorized>
+            <p class="text-lightdark">@Letra</p>
+            <RadzenDataList WrapItems="true" AllowPaging="true" Data="@_agendaViewModel.Usuarios" TItem="Usuario" PageSize="10" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true">
+                <Template Context="usuario">
+                    <RadzenCard Class="p-0 rounded-slg shadow-sm">
+                        <div>
+                            <div class="row">
+                                <div class="col-lg-5 py-3 px-4 product-title">
+                                    <div class="my-auto row">
+                                        <div class="col-md-6 col-lg-4 my-auto">
+                                            @if (usuario.FotoPerfil != null)
+                                            {
+                                                <img class="rounded mx-auto" src="data:image/png;base64,@usuario.FotoPerfil" style="max-width: 50px; max-height: 50px;" />
+                                            }
+                                            else
+                                            {
+                                                <img class="rounded mx-auto" src="/images/default-perfil.png" style="max-width: 50px; max-height: 50px;" />
+                                            }
+                                        </div>
+                                        <div class="col-md-6 col-lg-8 my-auto text-dark h5 font-weight-bold">
+                                            <div class="p-1">
+                                                @(usuario.Nombre)
+                                            </div>
+                                            <div class="p-1">
+                                                @(usuario.Apellidos)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-7 p-4 my-auto">
+                                    <div class="row d-flex">
+                                        <div class="col-md-6 col-lg-2">
+                                            <p class="mb-sm-2 mb-lg-0 text-muted">@(usuario.Extension)</p>
+                                        </div>
+                                        <div class="col-md-6 col-lg-3">
+                                            <p class="mb-sm-2 mb-lg-0 text-muted">@(usuario.Telefono)</p>
+                                            <p class="mb-sm-2 mb-lg-0 text-muted">@(usuario.Telefono2)</p>
+                                        </div>
+                                        <div class="col-md-6 col-lg-4">
+                                            <p class="mb-sm-2 mb-lg-0 text-muted">@(usuario.Email)</p>
+                                        </div>
+                                        <div class="col-md-6 col-lg-3">
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text=@(usuario.DepartamentoNombre) />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </RadzenCard>
+                </Template>
+            </RadzenDataList>
+        </Authorized>
+        <NotAuthorized>
+            <h5>Debes iniciar sesión para acceder al contenido.</h5>
+        </NotAuthorized>
+    </AuthorizeView>
+}
+
+@code {
+
+    private bool Loaded { get; set; } = true;
+    private string Letra { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Spinner(true);
+        Letra = "Resultados para nombres que empiezan por A";
+        await _agendaViewModel.BuscarUsuario("A");
+        Spinner(false);
+    }
+
+    private async Task BuscarUsuario(string value)
+    {
+        Spinner(true);
+        _settingsViewModel.EstadoNavegacion = "Agenda";
+        Letra = null;
+
+        if (value.Equals(""))
+        {
+            await _agendaViewModel.BuscarUsuario("A");
+        }
+        else if (value.Length > 0 && value.Length % 2 == 0)
+        {
+            await _agendaViewModel.BuscarUsuario(value);
+        }
+
+        Spinner(false);
+    }
+
+    private async Task BuscarUsuarioPorLetra(string value)
+    {
+        Spinner(true);
+        _settingsViewModel.EstadoNavegacion = "Agenda";
+        Letra = "Resultados para nombres que empiezan por " + value;
+        await _agendaViewModel.BuscarUsuarioPorLetra(value);
+
+        Spinner(false);
+    }
+
+    /// <summary>
+    /// Se muestra o no el spinner según si está cargado o no
+    /// </summary>
+    /// <param name="activo"></param>
+    private void Spinner(bool activo)
+    {
+        Loaded = activo ? false : true;
+    }
+}
+

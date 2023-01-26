@@ -1,0 +1,178 @@
+﻿@page "/MiPerfil"
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+@using System.Net
+
+@inject IProfileViewModel _profileViewModel
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+@inject IMainViewModel _mainViewModel
+
+<h2><b>Mi Perfil</b></h2>
+<hr />
+@if (_profileViewModel.Identificador == null)
+{
+    <div class="mt-4">
+        <div class="spinner"></div>
+    </div>
+}
+else
+{
+    <AuthorizeView>
+        <Authorized>
+            <EditForm Model="_profileViewModel" OnValidSubmit="@ActualizarPerfil">
+                <ChildContent Context="Crear">
+                    <div class="col-10">
+                        <div class="form-group row">
+                            <div class="col-md-8">
+                                <label class="col-md-12 col-form-label">Nombre</label>
+                                <RadzenTextBox @bind-Value="_profileViewModel.Nombre" Class="w-100" Placeholder="Nombre" Disabled="true" />
+                                <label class="col-md-12 col-form-label">Apellidos</label>
+                                <RadzenTextBox @bind-Value="_profileViewModel.Apellidos" Class="w-100" Placeholder="Apellidos" Disabled="true" />
+                            </div>
+                            <div class="col-md-4">
+                                <div class="col-md-10 p-1">
+                                    @if (_profileViewModel.FotoPerfil != null)
+                                    {
+                                        <img class="rounded" src="data:image/png;base64,@_profileViewModel.FotoPerfil" style="max-width: 100px; max-height: 100px;"/>
+                                    }
+                                    else
+                                    {
+                                        <img class="rounded" src="/images/default-perfil.png" style="max-width: 100px; max-height: 100px;"/>
+                                    }
+                                </div>
+                                <div class="input-group">
+                                    <div class="custom-file">
+                                        <InputFile class="custom-file-input" multiple OnChange="SubirImagen" accept="image/png, image/jpeg, image/gif" id="inputFile" />
+                                        <label class="custom-file-label" for="inputFile">Subir imagen</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-md-8 col-form-label">Email</label>
+                            <label class="col-md-4 col-form-label">Extensión</label>
+                            <div class="col-md-8">
+                                <RadzenTextBox @bind-Value="_profileViewModel.Email" Class="w-100" Placeholder="Correo electrónico" />
+                            </div>
+                            <div class="col-md-4">
+                                <RadzenTextBox @bind-Value="_profileViewModel.Extension" Class="w-100" Placeholder="Extensión" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-md-12 col-form-label">Contraseña</label>
+                            <div class="col-md-8">
+                                <RadzenTextBox @bind-Value="_profileViewModel.Contrasena" Class="w-100" Placeholder="Contraseña" type="@TypeText" />
+                            </div>
+                            <div class="col-md-4 my-auto">
+                                <a href="javascript:void(0)" @onclick=HideShowPassword><span class="material-icons text-muted ">visibility</span></a>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-md-12 col-form-label">Departamento</label>
+                            <div class="col-md-10">
+                                <RadzenTextBox @bind-Value="_profileViewModel.DepartamentoNombre" Class="w-100" Placeholder="Departamento" Disabled="true" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-md-6 col-form-label">Teléfono principal</label>
+                            <label class="col-md-6 col-form-label">Teléfono alternativo</label>
+                            <div class="col-md-6">
+                                <RadzenTextBox @bind-Value="_profileViewModel.Telefono" Class="w-100" Placeholder="Teléfono principal" />
+                            </div>
+                            <div class="col-md-6">
+                                <RadzenTextBox @bind-Value="_profileViewModel.Telefono2" Class="w-100" Placeholder="Teléfono alternativo" />
+                            </div>
+                        </div>
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="col-md-12 text-left mt-4">
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar" Style="width: 120px" />
+                        </div>
+                    </div>
+                </ChildContent>
+            </EditForm>
+        </Authorized>
+        <NotAuthorized>
+            <h5>Debes iniciar sesión para acceder al contenido.</h5>
+        </NotAuthorized>
+    </AuthorizeView>
+}
+
+@code {
+
+    [Parameter]
+    public Usuario Usuario { get; set; }
+
+    private bool HideShow { get; set; } = true;
+    private string TypeText { get; set; } = "password";
+
+    private HttpResponseMessage response { get; set; }
+
+    private void HideShowPassword()
+    {
+        if (HideShow)
+        {
+            TypeText = "text";
+        }
+        else
+        {
+            TypeText = "password";
+        }
+        HideShow = !HideShow;
+    }
+
+    /// <summary>
+    /// Inicializa
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        response = await _profileViewModel.GetPerfil();
+
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            _profileViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+            _profileViewModel.Mensaje = "Ha habido un error al recibir el perfil.";
+            _messageService.ShowNotification(_notificationService, "Perfil", _profileViewModel.Mensaje, _profileViewModel.NotificacionSeveridad);
+        }
+    }
+
+    /// <summary>
+    /// Actualiza el perfil del usuario actual
+    /// </summary>
+    protected async void ActualizarPerfil()
+    {
+        response = await _profileViewModel.ActualizarPerfil();
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            _profileViewModel.NotificacionSeveridad = NotificationSeverity.Success;
+            _profileViewModel.Mensaje = "Perfil actualizado correctamente.";
+        }
+        else
+        {
+            _profileViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+            _profileViewModel.Mensaje = "Ha habido un error al actualizar el perfil.";
+        }
+        _messageService.ShowNotification(_notificationService, "Perfil", _profileViewModel.Mensaje, _profileViewModel.NotificacionSeveridad);
+    }
+
+    async Task SubirImagen(InputFileChangeEventArgs e)
+    {
+        var files = e.GetMultipleFiles();
+        foreach (var file in files)
+        {
+            var resizedFile = await file.RequestImageFileAsync(file.ContentType, 400, 200);
+            var buf = new byte[resizedFile.Size];
+            using (var stream = resizedFile.OpenReadStream())
+            {
+                await stream.ReadAsync(buf);
+            }
+            _profileViewModel.FotoPerfil = Convert.ToBase64String(buf);
+        }
+    }
+}
+
+@functions {
+}

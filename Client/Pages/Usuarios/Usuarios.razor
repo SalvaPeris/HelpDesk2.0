@@ -1,0 +1,133 @@
+﻿@page "/Usuarios"
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+@inject IUsuariosViewModel _usuariosViewModel
+@inject IProfileViewModel _profileViewModel
+@inject NavigationManager _navigationManager
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+
+<AuthorizeView Policy="EsAdministradorRecursos Humanos">
+    <Authorized>
+        <div class="row">
+            <div class="col-lg-6 text-left">
+                <h2><b>Usuarios</b></h2>
+            </div>
+            <div class="col-lg-6 text-right">
+                <RadzenButton Click=@(args => Shared.Funciones.NavegarA(_navigationManager ,"Usuarios/0")) Icon="add_circle_outline" ButtonStyle="ButtonStyle.Secondary" Text="Nuevo Usuario" />
+            </div>
+        </div>
+        <hr />
+        <div class="row">
+            <div class="col-lg-2 text-left">
+            </div>
+            <div class="col-lg-4 text-right">
+                @*<RadzenTextBox @oninput=@(args => BuscarUsuario(args.Value.ToString())) Placeholder="Buscar..." Style="width: 100%;" />*@
+            </div>
+        </div>
+        @if (!Loaded)
+        {
+            <div class="mt-4">
+                <div class="spinner"></div>
+            </div>
+        }
+        else
+        {
+            <RadzenDataList WrapItems="true" AllowPaging="true" Data="@_usuariosViewModel.Usuarios" TItem="Usuario" PageSize="10" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true">
+                <Template Context="usuario">
+                    <RadzenCard Class="p-0 rounded-slg shadow-sm">
+                        <div>
+                            <div class="row">
+                                <div class="col-lg-5 my-auto px-4">
+                                    <div class="row">
+                                        <div class="col-md-4 col-lg-4 my-auto">
+                                            @if (usuario.FotoPerfil != null)
+                                            {
+                                                <img class="mx-auto rounded" src="data:image/png;base64,@usuario.FotoPerfil" style="max-width: 50px; max-height: 50px;" />
+                                            }
+                                            else
+                                            {
+                                                <img class="mx-auto rounded" src="/images/default-perfil.png" style="max-width: 50px; max-height: 50px;" />
+                                            }
+                                        </div>
+                                        <div class="col-md-8 col-lg-8 my-auto">
+                                            <div class="p-1 font-weight-bold">
+                                                <a href="javascript:void(0)" @onclick="@(args => EditarUsuario(usuario.UsuarioId))"><h5 class="mb-0 font-weight-bold" style="font-size:large">@(usuario.Nombre) @(usuario.Apellidos)</h5></a>
+                                            </div>
+                                            <div class="p-1 text-muted">
+                                                @(usuario.Identificador)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 p-4 my-auto">
+                                    <div class="row d-flex">
+                                        <div class="col-md-6 col-lg-3 my-auto">
+                                            <p class="mb-sm-2 mb-lg-0 text-muted">@(usuario.Extension)</p>
+                                        </div>
+                                        <div class="col-md-6 col-lg-3 my-auto">
+                                            <p class="mb-sm-2 mb-lg-0 text-muted">@(usuario.Telefono)</p>
+                                            <p class="mb-sm-2 mb-lg-0 text-muted">@(usuario.Telefono2)</p>
+                                        </div>
+                                        <div class="col-md-6 col-lg-3 my-auto">
+                                            <p class="mb-sm-2 mb-lg-0 text-muted">@(usuario.Email)</p>
+                                        </div>
+                                        <div class="col-md-6 col-lg-3 my-auto">
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text=@(usuario.DepartamentoNombre) />
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text=@(usuario.Rol) />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </RadzenCard>
+                </Template>
+            </RadzenDataList>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <h5>No estás autorizado para acceder al contenido.</h5>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private bool Loaded { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Spinner(true);
+        await _usuariosViewModel.GetUsuarios();
+        Spinner(false);
+    }
+
+    /*private async Task BuscarTicket(string value)
+    {
+        if (value == null || value.Equals(""))
+        {
+            await _ticketViewModel.GetTickets();
+        }
+        else
+        {
+            await _ticketViewModel.BuscarTickets(value);
+        }
+    }*/
+
+    /// <summary>
+    /// Editar un usuario
+    /// </summary>
+    /// <param name="usuarioId"></param>
+    private void EditarUsuario(Guid usuarioId)
+    {
+        _profileViewModel.Anular();
+        _navigationManager.NavigateTo($"/Usuarios/{usuarioId}");
+    }
+
+    /// <summary>
+    /// Se muestra o no el spinner según si está cargado o no
+    /// </summary>
+    /// <param name="activo"></param>
+    private void Spinner(bool activo)
+    {
+        Loaded = activo ? false : true;
+    }
+}

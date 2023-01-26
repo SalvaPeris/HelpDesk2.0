@@ -1,0 +1,61 @@
+﻿@functions {
+    /// <summary>
+    /// Redirecciona a la página que le envies
+    /// </summary>
+    /// <param name="IrAPagina"></param>
+    public static void NavegarA(NavigationManager NavigationManager ,string IrAPagina)
+    {
+        NavigationManager.NavigateTo(IrAPagina);
+    }
+
+    /// <summary>
+    /// Se muestra o no el spinner según si está cargado o no
+    /// </summary>
+    /// <param name="activo"></param>
+    public static bool Spinner(bool activo)
+    {
+        return activo ? false : true;
+    }
+
+    /// <summary>
+    /// Tiempo total trabajado
+    /// </summary>
+    /// <param name="HoraEntrada"></param>
+    /// <param name="HoraSalida"></param>
+    /// <returns></returns>
+    public static string GetTiempoTotal(DateTime? HoraEntrada, DateTime? HoraSalida)
+    {
+        TimeSpan? TiempoTotal = (HoraSalida - HoraEntrada);
+        string _tiempoTotal;
+
+        if (TiempoTotal?.Minutes == 0)
+        {
+            _tiempoTotal = String.Format("{0} h", TiempoTotal?.Hours);
+        }
+        else
+        {
+            _tiempoTotal = String.Format("{0} h {1} m", TiempoTotal?.Hours, TiempoTotal?.Minutes);
+        }
+
+        return _tiempoTotal;
+    }
+
+    public static DateTime GetDateTimeNow()
+    {
+        DateTime utcTime = DateTime.UtcNow;
+
+        TimeZoneInfo myZone;
+        try
+        {
+            myZone = TimeZoneInfo.FindSystemTimeZoneById("Romance Standard Time");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            myZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Madrid");
+        }
+
+        DateTime customDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, myZone);
+        return customDateTime;
+    }
+}
+

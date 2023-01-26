@@ -1,0 +1,121 @@
+is_global = true
+build_property.TargetFramework = net6.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = false
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = browser
+build_property.RootNamespace = HelpDesk.Client
+build_property.RootNamespace = HelpDesk.Client
+build_property.ProjectDir = C:\Users\salvap\source\repos\HelpDesk2.0\Client\
+build_property.RazorLangVersion = 3.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = C:\Users\salvap\source\repos\HelpDesk2.0\Client
+build_property._RazorSourceGeneratorDebug = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/App.razor]
+build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Agenda/Agenda.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWdlbmRhXEFnZW5kYS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Ajustes/Settings.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWp1c3Rlc1xTZXR0aW5ncy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Chat/Chat.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2hhdFxDaGF0LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Configuración/Configuracion.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ29uZmlndXJhY2nDs25cQ29uZmlndXJhY2lvbi5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Dispositivos/Dispositivos.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGlzcG9zaXRpdm9zXERpc3Bvc2l0aXZvcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Dispositivos/SingleDispositivo.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGlzcG9zaXRpdm9zXFNpbmdsZURpc3Bvc2l0aXZvLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Inicio.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5pY2lvLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Jornadas/Jornadas.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSm9ybmFkYXNcSm9ybmFkYXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Jornadas/SingleJornada.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSm9ybmFkYXNcU2luZ2xlSm9ybmFkYS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/MiCalendario/MiCalendario.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTWlDYWxlbmRhcmlvXE1pQ2FsZW5kYXJpby5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/MisArchivos/MisArchivos.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTWlzQXJjaGl2b3NcTWlzQXJjaGl2b3MucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/MisDispositivos/MisDispositivos.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTWlzRGlzcG9zaXRpdm9zXE1pc0Rpc3Bvc2l0aXZvcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/MisJornadas/MisJornadas.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTWlzSm9ybmFkYXNcTWlzSm9ybmFkYXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/MiUsuario/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTWlVc3VhcmlvXExvZ2luLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Perfil/Perfil.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUGVyZmlsXFBlcmZpbC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Shared/Funciones.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXEZ1bmNpb25lcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Tickets/SingleTicket.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVGlja2V0c1xTaW5nbGVUaWNrZXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Tickets/Suplemento.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVGlja2V0c1xTdXBsZW1lbnRvLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Tickets/Tickets.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVGlja2V0c1xUaWNrZXRzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Tickets/Ubicacion.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVGlja2V0c1xVYmljYWNpb24ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Usuarios/SingleUsuario.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVXN1YXJpb3NcU2luZ2xlVXN1YXJpby5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Pages/Usuarios/Usuarios.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVXN1YXJpb3NcVXN1YXJpb3MucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Shared/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE1haW5MYXlvdXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/Shared/NavMenu.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE5hdk1lbnUucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/salvap/source/repos/HelpDesk2.0/Client/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 

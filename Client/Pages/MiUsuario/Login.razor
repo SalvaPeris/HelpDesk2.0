@@ -1,0 +1,153 @@
+﻿@page "/"
+@using HelpDesk.ViewModels
+@using System.Net
+
+@inject ILoginViewModel _loginViewModel
+@inject IRecuperarContrasenaViewModel _recuperarContrasenaViewModel
+@inject NavigationManager _navigationManager
+@inject MessageService _messageService
+@inject DialogService DialogService
+@inject NotificationService _notificationService
+
+<div class="container">
+    <div class="m-5">
+        <h1><b>Portal del Empleado</b></h1>
+    </div>
+    <div class="row">
+        <div class="card p-4 rounded-slg shadow col-xl-6 mx-auto text-center">
+            <h3 class="mb-4">Inicia sesión</h3>
+            <RadzenTemplateForm Data=@("Login")>
+                <RadzenLogin LoginText="Iniciar" UserText="Identificador" UserRequired="El identificador es necesario." PasswordText="Contraseña" PasswordRequired="La contraseña es necesaria." ResetPasswordText="He olvidado la contraseña" AllowRegister="false" AllowResetPassword="true" Login=@(args => OnLogin(args)) ResetPassword=@PreguntaRecuperarContrasena />
+            </RadzenTemplateForm>
+            <div class="row">
+                <div class="col-4 p-2">
+                    <RadzenButton Click=AccesoPepe Text="Acceso Pepe" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Medium" />
+                </div>
+                <div class="col-4 p-2">
+                    <RadzenButton Click=AccesoTeresa Text="Acceso Teresa" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Medium" />
+                </div>
+                <div class="col-4 p-2">
+                    <RadzenButton Click=AccesoSalva Text="Acceso Salva" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Medium" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="text-center m-3">
+        <p class="text-muted"> Si tiene problemas para acceder, póngase en contacto con el departamento de Recursos Humanos.</p>
+    </div>
+</div>
+
+@code {
+
+    private HttpResponseMessage response;
+
+    /// <summary>
+    /// Se recolectan los datos para enviar.
+    /// </summary>
+    /// <param name="args"></param>
+    async void OnLogin(LoginArgs args)
+    {
+        _loginViewModel.Identificador = args.Username;
+        _loginViewModel.Contrasena = args.Password;
+        await LoginUsuario();
+    }
+
+    /// <summary>
+    /// Acceso Pruebas
+    /// </summary>
+    /// <returns></returns>
+    protected async Task AccesoSalva()
+    {
+        _loginViewModel.Identificador = "11111111";
+        _loginViewModel.Contrasena = "1234";
+        await LoginUsuario();
+    }
+
+    /// <summary>
+    /// Acceso Pruebas
+    /// </summary>
+    /// <returns></returns>
+    protected async Task AccesoPepe()
+    {
+        _loginViewModel.Identificador = "22222222";
+        _loginViewModel.Contrasena = "1234";
+        await LoginUsuario();
+    }
+
+    /// <summary>
+    /// Acceso Pruebas
+    /// </summary>
+    /// <returns></returns>
+    protected async Task AccesoTeresa()
+    {
+        _loginViewModel.Identificador = "33333333";
+        _loginViewModel.Contrasena = "1234";
+        await LoginUsuario();
+    }
+
+    /// <summary>
+    /// Se consulta el usuario y la contraseña.
+    /// </summary>
+    /// <returns></returns>
+    private async Task LoginUsuario()
+    {
+        response = await _loginViewModel.LoginUsuario();
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            _navigationManager.NavigateTo("/Inicio", true);
+        }
+        else
+        {
+            _loginViewModel.NotificacionSeveridad = NotificationSeverity.Error;
+            _loginViewModel.Mensaje = "El identificador o la contraseña no son correctos o no existen en el sistema.";
+            _messageService.ShowNotification(_notificationService, _loginViewModel.Mensaje, _loginViewModel.NotificacionSeveridad);
+        }
+    }
+
+    /// <summary>
+    /// Recuperar contraseña en caso de que no se acuerde
+    /// </summary>
+    /// <returns></returns>
+    protected async Task RecuperarContrasena()
+    {
+        await _recuperarContrasenaViewModel.ResetContrasena();
+        _messageService.ShowNotification(_notificationService, "Recuperación Contraseña", _recuperarContrasenaViewModel.Mensaje, _recuperarContrasenaViewModel.NotificacionSeveridad);
+    }
+
+    /// <summary>
+    /// Capturar el DNI del usuario
+    /// </summary>
+    /// <param name="value"></param>
+    void OnChange(string value)
+    {
+        _recuperarContrasenaViewModel.Identificador = value;
+    }
+
+    /// <summary>
+    /// Se pregunta para asegurarse de que se quiere recuperar la contraseña.
+    /// </summary>
+    /// <returns></returns>
+    protected async Task PreguntaRecuperarContrasena()
+    {
+        var result = await DialogService.OpenAsync("Recuperar contraseña", ds =>
+        @<div>
+            <EditForm Model="_recuperarContrasenaViewModel" OnValidSubmit="@RecuperarContrasena">
+                <ChildContent Context="crear">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="form-group row">
+                        <label class="col-md-12 col-form-label">Identificador</label>
+                        <div class="col-md-12">
+                            <RadzenTextBox Change=@(args => OnChange(args)) Class="w-100" />
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-left mt-4">
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Enviar" Style="width: 120px" />
+                        <RadzenButton Text="Cancelar" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1" />
+                    </div>
+                </ChildContent>
+            </EditForm>
+        </div>);
+    }
+}

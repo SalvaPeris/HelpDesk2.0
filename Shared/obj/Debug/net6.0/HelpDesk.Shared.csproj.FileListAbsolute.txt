@@ -1,0 +1,12 @@
+/Users/spg/Projects/HelpDesk/Shared/bin/Debug/net6.0/HelpDesk.Shared.deps.json
+/Users/spg/Projects/HelpDesk/Shared/bin/Debug/net6.0/HelpDesk.Shared.dll
+/Users/spg/Projects/HelpDesk/Shared/bin/Debug/net6.0/HelpDesk.Shared.pdb
+/Users/spg/Projects/HelpDesk/Shared/obj/Debug/net6.0/HelpDesk.Shared.csproj.AssemblyReference.cache
+/Users/spg/Projects/HelpDesk/Shared/obj/Debug/net6.0/HelpDesk.Shared.GeneratedMSBuildEditorConfig.editorconfig
+/Users/spg/Projects/HelpDesk/Shared/obj/Debug/net6.0/HelpDesk.Shared.AssemblyInfoInputs.cache
+/Users/spg/Projects/HelpDesk/Shared/obj/Debug/net6.0/HelpDesk.Shared.AssemblyInfo.cs
+/Users/spg/Projects/HelpDesk/Shared/obj/Debug/net6.0/HelpDesk.Shared.csproj.CoreCompileInputs.cache
+/Users/spg/Projects/HelpDesk/Shared/obj/Debug/net6.0/HelpDesk.Shared.dll
+/Users/spg/Projects/HelpDesk/Shared/obj/Debug/net6.0/refint/HelpDesk.Shared.dll
+/Users/spg/Projects/HelpDesk/Shared/obj/Debug/net6.0/HelpDesk.Shared.pdb
+/Users/spg/Projects/HelpDesk/Shared/obj/Debug/net6.0/ref/HelpDesk.Shared.dll

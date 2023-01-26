@@ -1,0 +1,95 @@
+﻿@page "/Jornadas/Jornada"
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+
+@inject ISingleJornadaViewModel _singleJornadaViewModel
+@inject IMainViewModel _mainViewModel
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+@inject Radzen.DialogService dialogService
+
+<AuthorizeView>
+    <Authorized>
+        <div class="col-12">
+            <EditForm Model="_singleJornadaViewModel" OnValidSubmit="@AccionSuplemento">
+                <ChildContent Context="Crear">
+                    <div class="form-group row">
+                        <label class="col-md-12 col-form-label">Jornada</label>
+                        <RadzenDatePicker TValue="DateTime" @bind-Value="_singleJornadaViewModel.FechaJornada" ShowTime="true" ShowSeconds="true" HoursStep="1.5" MinutesStep="5" SecondsStep="10" DateFormat="MM/dd/yyyy HH:mm" Class="w-100" />
+                    </div>
+                    <div class="col-md-12 text-right mt-4">
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar" Style="width: 120px" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text="Cancelar" Click="Cancelar" Style="width: 120px" />
+                    </div>
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                </ChildContent>
+            </EditForm>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <h5>Debes iniciar sesión para acceder al contenido.</h5>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+    [Parameter]
+    public Jornada Jornada { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Jornada.JornadaId != 0)
+        {
+            _singleJornadaViewModel.SetSingleJornada(Jornada);
+        }
+    }
+
+    /// <summary>
+    /// Según se abra Nuevo o Modificar, se ejecuta una u otra acción.
+    /// </summary>
+    /// <returns></returns>
+    protected void AccionSuplemento()
+    {
+        if (Jornada.JornadaId != 0)
+        {
+            ModificarComentario();
+        }
+        else
+        {
+            NuevaJornada();
+        }
+    }
+
+    /// <summary>
+    /// Añade nueva jornada
+    /// </summary>
+    /// <returns></returns>
+    protected void NuevaJornada()
+    {/*
+    DateTime now = DateTime.Now;
+    _suplementoViewModel.FechaCreacion = DateTime.Now;
+    _suplementoViewModel.CreadoPor = _mainViewModel.Identificador;
+    _suplementoViewModel.CreadoPorNombreCompleto = _mainViewModel.Nombre + " " + _mainViewModel.Apellidos;
+    _singleTicketViewModel.NuevoSuplemento(_suplementoViewModel.GetSingleSuplemento());
+    dialogService.Close(true);*/
+    }
+
+
+    /// <summary>
+    /// Modifica el comentario
+    /// </summary>
+    /// <returns></returns>
+    protected void ModificarComentario()
+    {/*
+    _suplementoViewModel.FechaCreacion = DateTime.Now;
+    _singleTicketViewModel.ModificarSuplemento(SuplementoTicket, _suplementoViewModel.GetSingleSuplemento());
+    dialogService.Close(true);*/
+    }
+
+    protected void Cancelar()
+    {
+        _singleJornadaViewModel.Anular();
+        dialogService.Close(true);
+    }
+}

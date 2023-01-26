@@ -1,0 +1,224 @@
+﻿@inherits LayoutComponentBase
+
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models;
+@using System.Threading;
+@using Microsoft.AspNetCore.SignalR.Client;
+
+@inject IMainViewModel _mainViewModel
+@inject IUsuariosChatViewModel _usuariosChatViewModel
+@inject IGrupoChatViewModel _grupoChatViewModel
+@inject NavigationManager _navigationManager
+@inject HttpClient _httpClient
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+
+<div class="top-row pl-4 mb-4 navbar navbar-light">
+    <h4 class="mx-auto my-auto text-center" href=""><img style="max-width: 120px;" src="/images/logo.png"></h4>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+<div class="@NavMenuCssClass">
+    <ul class="nav flex-column m-2">
+
+        <AuthorizeView>
+            <Authorized>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="Inicio">
+                        <div class="mx-2 mt-2"><i class="material-icons">home</i></div> Inicio
+                    </NavLink>
+                </li>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="Tickets">
+                        <div class="mx-2 mt-2"><i class="material-icons">handyman</i></div> Tickets
+                    </NavLink>
+                </li>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="Chat">
+                        <div class="mx-2 mt-2"><i class="material-icons">devices</i></div> Chat
+                    </NavLink>
+                </li>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="MisDispositivos">
+                        <div class="mx-2 mt-2"><i class="material-icons">devices</i></div> Mis dispositivos
+                    </NavLink>
+                </li>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="Agenda">
+                        <div class="mx-2 mt-2"><i class="material-icons">contact_phone</i></div> Agenda
+                    </NavLink>
+                </li>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="MisJornadas">
+                        <div class="mx-2 mt-2"><i class="material-icons">query_builder</i></div> Mis Jornadas
+                    </NavLink>
+                </li>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="MisArchivos">
+                        <div class="mx-2 mt-2"><i class="material-icons">description</i></div> Mis Archivos
+                    </NavLink>
+                </li>
+                <AuthorizeView Policy="EsObras">
+                    <ChildContent Context="Obras">
+                        <li class="nav-item px-3">
+                            <NavLink class="nav-link" href="Obras">
+                                <div class="mx-2 mt-2"><i class="material-icons">engineering</i></div> Obras
+                            </NavLink>
+                        </li>
+                    </ChildContent>
+                </AuthorizeView>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="MiPerfil" Match="NavLinkMatch.All">
+                        <div class="mx-2 mt-2"><i class="material-icons">account_circle</i></div> Mi Perfil
+                    </NavLink>
+                </li>
+                <AuthorizeView Policy="EsAdministrador">
+                    <ChildContent Context="Administrar">
+                        <br />
+                        <li class="h6 px-3 mx-auto my-2 text-secondary font-weight-bold">
+                            ADMINISTRACIÓN
+                        </li>
+                    </ChildContent>
+                </AuthorizeView>
+
+                <AuthorizeView Policy="EsAdministradorRecursos Humanos">
+                    <ChildContent Context="RRHH">
+                        <li class="nav-item px-3">
+                            <NavLink class="nav-link" href="Usuarios">
+                                <div class="mx-2 mt-2"><i class="material-icons">groups</i></div> Usuarios
+                            </NavLink>
+                        </li>
+                    </ChildContent>
+                </AuthorizeView>
+                <AuthorizeView Policy="EsAdministrador">
+                    <ChildContent Context="Fichajes">
+                        <li class="nav-item px-3">
+                            <NavLink class="nav-link" href="Jornadas">
+                                <div class="mx-2 mt-2"><i class="material-icons">schedule</i></div> Jornadas
+                            </NavLink>
+                        </li>
+                    </ChildContent>
+                </AuthorizeView>
+                <AuthorizeView Policy="EsAdministrador">
+                    <ChildContent Context="Dispositivos">
+                        <li class="nav-item px-3">
+                            <NavLink class="nav-link" href="Dispositivos">
+                                <div class="mx-2 mt-2"><i class="material-icons">devices</i></div> Dispositivos
+                            </NavLink>
+                        </li>
+                    </ChildContent>
+                </AuthorizeView>
+                <AuthorizeView Policy="EsSuperAdministrador">
+                    <ChildContent Context="Configuracion">
+                        <li class="nav-item px-3">
+                            <NavLink class="nav-link" href="Configuracion">
+                                <div class="mx-2 mt-2"><i class="material-icons">settings</i></div> Configuración
+                            </NavLink>
+                        </li>
+                    </ChildContent>
+                </AuthorizeView>
+
+                <!--<li class="nav-item px-3">
+                <NavLink class="nav-link" href="Ajustes">
+                    <div class="mx-2 mt-2"><i class="material-icons">query_builder</i></div> Fichajes
+                </NavLink>
+                </li>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="Ajustes">
+                        <div class="mx-2 mt-2"><i class="material-icons">beach_access</i></div> Vacaciones
+                    </NavLink>
+                </li>-->
+                <br />
+                <br />
+                <li class="nav-item px-2 mx-auto">
+                    <h6 class="my-auto mr-2 p-2">Hola, @_mainViewModel.Nombre </h6>
+                    <RadzenButton Click=@LogoutUsuario ButtonStyle="ButtonStyle.Danger" Text="Cerrar sesión" />
+                </li>
+            </Authorized>
+            <NotAuthorized>
+                <li class="nav-item navbar-right">
+                    <a class="btn rounded btn-outline-light" href="Login">Iniciar sesión</a>
+                </li>
+            </NotAuthorized>
+        </AuthorizeView>
+    </ul>
+</div>
+
+@code {
+    private bool collapseNavMenu = false;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await _mainViewModel.GetUsuarioActual();
+
+        if (_mainViewModel.UsuarioId != new Guid())
+        {
+            await StartChatAsync();
+        }
+    }
+
+
+    private async Task StartChatAsync()
+    {
+        if (_usuariosChatViewModel.HubConnection == null)
+        {
+            await _usuariosChatViewModel.CrearHubConnection(_navigationManager.ToAbsoluteUri("/chathub"));
+            await ConectarChat();
+
+            //Usuario te dice mensaje
+            _usuariosChatViewModel.EventChatHandler = _usuariosChatViewModel.HubConnection.On<MensajeChat>("ReceiveMessage", (mensajeChat) =>
+            {
+                _messageService.ShowNotification(_notificationService, mensajeChat.CreadoPor.Nombre + " " + mensajeChat.CreadoPor.Apellidos + " dice ", mensajeChat.Mensaje, NotificationSeverity.Success);
+            });
+
+            //Usuario se ha conectado
+            _usuariosChatViewModel.HubConnection.On<string>("ReceiveNotification", (mensaje) =>
+            {
+                _messageService.ShowNotification(_notificationService, mensaje, NotificationSeverity.Success);
+            });
+
+            //Nuevo grupo creado
+            _usuariosChatViewModel.HubConnection.On<GruposChat>("NewGroup", (grupos) =>
+            {
+                _usuariosChatViewModel.Usuarios = grupos.Usuarios;
+                _usuariosChatViewModel.Grupos = grupos.Grupos;
+            });
+        }
+        else if (_usuariosChatViewModel.HubConnection.State == HubConnectionState.Disconnected)
+        {
+            await _usuariosChatViewModel.HubConnection.StartAsync();
+        }
+        else
+        {
+            _grupoChatViewModel.GrupoChat.Mensajes.Clear();
+        }
+    }
+
+    private void Refrescar(MensajeChat mensajeChat)
+    {
+        _grupoChatViewModel.GrupoChat.Mensajes.Add(mensajeChat);
+    }
+
+
+    private async Task ConectarChat()
+    {
+        if (_usuariosChatViewModel.HubConnection is not null)
+        {
+            await _usuariosChatViewModel.ConectarUsuario();
+        }
+    }
+
+    private async Task LogoutUsuario()
+    {
+        await _httpClient.GetAsync("usuario/logout");
+        _navigationManager.NavigateTo("/", true);
+    }
+}

@@ -1,0 +1,10 @@
+﻿@page "/Ajustes"
+@using HelpDesk.ViewModels
+@inject ISettingsViewModel _settingsViewModel
+
+<h2><b>Mis ajustes</b></h2> 
+<hr />
+
+@code {
+    protected override async Task OnInitializedAsync() => await _settingsViewModel.GetPerfil();
+}

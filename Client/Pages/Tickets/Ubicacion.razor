@@ -1,0 +1,126 @@
+﻿@page "/Ticket/Ubicacion"
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+@using System.Net
+
+@inject IZonaTicketViewModel _zonaTicketViewModel
+@inject ISingleTicketViewModel _singleTicketViewModel
+@inject IZonaViewModel _zonaViewModel
+@inject IMainViewModel _mainViewModel
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+@inject Radzen.DialogService dialogService
+
+<AuthorizeView>
+    <Authorized>
+        <div class="col-12">
+            <EditForm Model="_zonaTicketViewModel" OnValidSubmit="@AccionZona">
+                <ChildContent Context="Crear">
+                    <div class="input-group">
+                        <label class="col-md-12 col-form-label">Zona</label>
+                        <div class="col-md-12">
+                            <RadzenDropDown AllowClear="true" TValue="string" Class="w-100"
+                                            AllowFiltering="true" Data=@OpcionesZona @bind-Value="_zonaTicketViewModel.Nombre" TextProperty="Nombre" ValueProperty="Nombre" Placeholder="Elige zona" />
+                        </div>
+                    </div>
+
+                    @if (Residente)
+                    {
+                        <div class="input-group">
+                            <label class="col-md-12 col-form-label">Apartamento</label>
+                            <div class="col-md-12">
+                                <RadzenNumeric TValue="string" Min="1" Max="99999" @bind-Value="_zonaTicketViewModel.Situacion" Class="w-100" Placeholder="Número del apartamento" />
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="input-group">
+                            <label class="col-md-12 col-form-label">Situación</label>
+                            <div class="col-md-12">
+                                <RadzenTextBox @bind-Value="_zonaTicketViewModel.Situacion" Class="w-100" Placeholder="Departamento, Planta, Hall, Recepción..." />
+                            </div>
+                        </div>
+                    }
+
+                    <div class="input-group">
+                        <label class="col-md-12 col-form-label">Observaciones</label>
+                        <div class="col-md-12">
+                            <RadzenTextArea @bind-Value="_zonaTicketViewModel.Observaciones" Cols="100" Rows="5" Class="w-100" Placeholder="Escribe información relevante para su localización" />
+                        </div>
+                    </div>
+                    <div class="col-md-12 text-right mt-4">
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar" Style="width: 120px" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text="Cancelar" Click="Cancelar" Style="width: 120px" />
+                    </div>
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                </ChildContent>
+            </EditForm>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <h5>Debes iniciar sesión para acceder al contenido.</h5>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+    [Parameter]
+    public ZonaTicket ZonaTicket { get; set; }
+    [Parameter]
+    public bool Residente { get; set; }
+    List<object> OpcionesZona = new List<object>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await _zonaViewModel.GetZonas();
+
+        OpcionesZona.AddRange(_zonaViewModel.Zonas
+            .Select(z => z.Nombre).ToList());
+
+        _zonaTicketViewModel.SetSingleZonaTicket(ZonaTicket);
+    }
+
+    /// <summary>
+    /// Según se abra Nuevo o Modificar, se ejecuta una u otra acción.
+    /// </summary>
+    /// <returns></returns>
+    protected void AccionZona()
+    {
+        if (ZonaTicket.ZonaTicketId != 0)
+        {
+            ModificarZona();
+        }
+        else
+        {
+            NuevaZona();
+        }
+    }
+
+    /// <summary>
+    /// Añade nuevo comentario
+    /// </summary>
+    /// <returns></returns>
+    protected void NuevaZona()
+    {
+        _singleTicketViewModel.NuevaZonaTicket(_zonaTicketViewModel.GetSingleZonaTicket());
+        dialogService.Close(true);
+    }
+
+    /// <summary>
+    /// Modifica el comentario
+    /// </summary>
+    /// <returns></returns>
+    protected void ModificarZona()
+    {
+        _singleTicketViewModel.ModificarZonaTicket(ZonaTicket, _zonaTicketViewModel.GetSingleZonaTicket());
+        dialogService.Close(true);
+    }
+
+    protected void Cancelar()
+    {
+        _zonaTicketViewModel.Anular();
+        dialogService.Close(true);
+    }
+}

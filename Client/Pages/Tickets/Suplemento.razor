@@ -1,0 +1,127 @@
+﻿@page "/Ticket/Suplemento"
+@using HelpDesk.ViewModels
+@using HelpDesk.Shared.Models
+@using System.Net
+
+@inject ISuplementoViewModel _suplementoViewModel
+@inject ISingleTicketViewModel _singleTicketViewModel
+@inject IMainViewModel _mainViewModel
+@inject MessageService _messageService
+@inject NotificationService _notificationService
+@inject Radzen.DialogService dialogService
+
+<AuthorizeView>
+    <Authorized>
+        <div class="col-12">
+            <EditForm Model="_suplementoViewModel" OnValidSubmit="@AccionSuplemento">
+                <ChildContent Context="Crear">
+                    <div class="form-group row">
+                        <label class="col-md-12 col-form-label">Comentario</label>
+                        <div class="col-md-12">
+                            <RadzenTextArea @bind-Value="_suplementoViewModel.Comentario" Cols="100" Rows="10" Class="w-100" />
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div class="custom-file col-md-6">
+                            <InputFile class="custom-file-input" multiple OnChange="SubirImagen" accept="image/png, image/jpeg, image/gif" id="inputFile" />
+                            <label class="custom-file-label" for="inputFile">Subir imagen</label>
+                        </div>
+                        @if (_suplementoViewModel.Imagen != null)
+                        {
+                            <div class="col-md-2 m-2">
+                                <img class="rounded" src="data:image/png;base64,@_suplementoViewModel.Imagen" />
+                            </div>
+                        }
+                    </div>
+                    <div class="col-md-12 text-right mt-4">
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Guardar" Style="width: 120px" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text="Cancelar" Click="Cancelar" Style="width: 120px" />
+                    </div>
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                </ChildContent>
+            </EditForm>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <h5>Debes iniciar sesión para acceder al contenido.</h5>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+    [Parameter]
+    public SuplementoTicket SuplementoTicket { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (SuplementoTicket.SuplementoTicketId != 0)
+        {
+            _suplementoViewModel.SetSingleSuplemento(SuplementoTicket);
+        }
+    }
+
+    /// <summary>
+    /// Según se abra Nuevo o Modificar, se ejecuta una u otra acción.
+    /// </summary>
+    /// <returns></returns>
+    protected void AccionSuplemento()
+    {
+        if (SuplementoTicket.SuplementoTicketId != 0)
+        {
+            ModificarComentario();
+        }
+        else
+        {
+            NuevoComentario();
+        }
+    }
+
+    /// <summary>
+    /// Añade nuevo comentario
+    /// </summary>
+    /// <returns></returns>
+    protected void NuevoComentario()
+    {
+        DateTime now = DateTime.Now;
+        _suplementoViewModel.FechaCreacion = DateTime.Now;
+        _suplementoViewModel.CreadoPor = _mainViewModel.Identificador;
+        _suplementoViewModel.CreadoPorNombreCompleto = _mainViewModel.Nombre + " " + _mainViewModel.Apellidos;
+        _singleTicketViewModel.NuevoSuplemento(_suplementoViewModel.GetSingleSuplemento());
+        dialogService.Close(true);
+    }
+
+
+    /// <summary>
+    /// Modifica el comentario
+    /// </summary>
+    /// <returns></returns>
+    protected void ModificarComentario()
+    {
+        _suplementoViewModel.FechaCreacion = DateTime.Now;
+        _singleTicketViewModel.ModificarSuplemento(SuplementoTicket, _suplementoViewModel.GetSingleSuplemento());
+        dialogService.Close(true);
+    }
+
+    protected void Cancelar()
+    {
+        _suplementoViewModel.Anular();
+        dialogService.Close(true);
+    }
+
+    async Task SubirImagen(InputFileChangeEventArgs e)
+    {
+        var files = e.GetMultipleFiles();
+        foreach (var file in files)
+        {
+            var resizedFile = await file.RequestImageFileAsync(file.ContentType, 800, 600);
+            var buf = new byte[resizedFile.Size];
+            using (var stream = resizedFile.OpenReadStream())
+            {
+                await stream.ReadAsync(buf);
+            }
+            _suplementoViewModel.Imagen = Convert.ToBase64String(buf);
+        }
+    }
+}
+

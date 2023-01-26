@@ -1,0 +1,81 @@
+﻿@page "/MisArchivos"
+@using HelpDesk.ViewModels
+@using System.IO
+
+@inject IJSRuntime JS
+@inject NavigationManager _navigationManager
+
+<AuthorizeView>
+    <Authorized>
+        <h2><b>Mis Archivos</b></h2>
+        <hr />
+        <InputFile OnChange="@(e => HandleFileSelected(e))" multiple />
+
+        <RadzenButton Click=@(e => SaveToFile("Pruebas.pdf")) Text="Descargar" />
+
+    </Authorized>
+    <NotAuthorized>
+        <h5>Debes iniciar sesión para acceder al contenido.</h5>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    int progress;
+    string info;
+    byte[] Buffer;
+    MemoryStream fileStream;
+
+    protected override void OnInitialized()
+    {
+
+    }
+
+    void OnProgress(UploadProgressArgs args)
+    {
+        this.info = $"% {args.Loaded} of {args.Total} bytes.";
+        this.progress = args.Progress;
+
+        if (args.Progress == 100)
+        {
+            foreach (var file in args.Files)
+            {
+                Console.WriteLine($"Uploaded: {file.Name} / {file.Size} bytes");
+            }
+        }
+    }
+
+    public async void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var files = e.GetMultipleFiles();
+        Buffer = new byte[0];
+        fileStream = new();
+        foreach (var file in files)
+        {
+            var buf = new byte[file.Size];
+            using (var stream = file.OpenReadStream())
+            {
+                await stream.ReadAsync(buf);
+            }
+
+            fileStream = new MemoryStream(buf);
+
+            Console.WriteLine("Adjunto1: " + buf);
+            Console.WriteLine("Adjunto2: " + fileStream);
+        }
+    }
+
+    private void SaveToFile(string filename)
+    {
+        //Como ya es PDF, utilizamos la segunda.
+        //byte[] data = Utils.PDF.PDF.CrearPDFDesdeFileStream(fileStream);
+        byte[] data = Utils.PDF.PDF.PDFDesdeFileStream(fileStream);
+        JS.InvokeVoidAsync("SaveFile", filename, Convert.ToBase64String(data));
+    }
+
+    private void OpenNewWindow(string filename)
+    {
+        byte[] data = Utils.PDF.PDF.CrearPDF("Pruebas");
+        JS.InvokeVoidAsync("OpenNew", Convert.ToBase64String(data));
+    }
+
+}

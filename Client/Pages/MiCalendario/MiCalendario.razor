@@ -1,0 +1,21 @@
+﻿@page "/MiCalendario"
+@using HelpDesk.ViewModels
+
+@inject NavigationManager _navigationManager
+@inject IProfileViewModel _profileViewModel
+
+<AuthorizeView>
+    <Authorized>
+        <h2><b>Mi Calendario</b></h2>
+        <hr />
+        <div class="m-4">
+            <RadzenDatePicker TValue="DateTime?" Inline="true"/>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <h5>Debes iniciar sesión para acceder al contenido.</h5>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+}

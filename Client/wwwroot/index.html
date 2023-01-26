@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HelpDesk</title>
+    <base href="/" />
+    <link rel="stylesheet" href="css/default.css" />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+
+<body>
+    <app>
+        <div class="m-4 p-4 w-100 h-100">
+            <div class="spinner"></div>
+        </div>
+    </app>
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script>navigator.serviceWorker.register('service-worker.js');</script>
+    <script src="js/pdf.js"></script>
+    <script type="text/javascript">
+        /*Para scroll al final en cada mensaje nuevo de chat*/
+        function scrollToEnd(element) {
+            element.scrollTop = element.scrollHeight;
+        }
+    </script>
+</body>
+
+</html>

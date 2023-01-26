@@ -1,0 +1,138 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RazorLangVersion>3.0</RazorLangVersion>
+    <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>anycpu</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'HelpDesk' ">
+    <ExternalConsole>true</ExternalConsole>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.5" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
+    <PackageReference Include="System.Net.Http.Json" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="6.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="6.0.5" />
+    <PackageReference Include="Radzen.Blazor" Version="3.18.13" />
+    <PackageReference Include="MaxMind.GeoIP2" Version="5.1.0" />
+    <PackageReference Include="itext7" Version="7.2.2" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client.Core" Version="6.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="6.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Radzen.Blazor" />
+    <None Remove="Services\" />
+    <None Remove="Authentication\" />
+    <None Remove="Pages\Tickets\" />
+    <None Remove="Pages\Perfil\" />
+    <None Remove="Pages\Ajustes\" />
+    <None Remove="Pages\Dispositivos\" />
+    <None Remove="Pages\Agenda\" />
+    <None Remove="Pages\Usuarios\" />
+    <None Remove="Pages\Chat\" />
+    <None Remove="ViewModels\Interfaces\Tickets\" />
+    <None Remove="ViewModels\Interfaces\Usuarios\" />
+    <None Remove="ViewModels\Interfaces\Agenda\" />
+    <None Remove="ViewModels\Classes\" />
+    <None Remove="ViewModels\Classes\Login\" />
+    <None Remove="ViewModels\Classes\Tickets\" />
+    <None Remove="ViewModels\Classes\Usuarios\" />
+    <None Remove="ViewModels\Classes\Agenda\" />
+    <None Remove="ViewModels\Interfaces\Login\" />
+    <None Remove="ViewModels\Classes\General\" />
+    <None Remove="ViewModels\Interfaces\Shared\" />
+    <None Remove="ViewModels\Interfaces\Dispositivos\" />
+    <None Remove="ViewModels\Classes\Dispositivos\" />
+    <None Remove="Pages\MisFichajes\" />
+    <None Remove="Geolocation" />
+    <None Remove="MaxMind.GeoIP2" />
+    <None Remove="ViewModels\Interfaces\MisDispositivos\" />
+    <None Remove="Pages\Shared\" />
+    <None Remove="ViewModels\Classes\Shared\" />
+    <None Remove="Pages\Configuración\" />
+    <None Remove="Pages\MisNóminas\" />
+    <None Remove="Pages\MiCalendario\" />
+    <None Remove="ViewModels\Classes\MisFichajes\" />
+    <None Remove="ViewModels\Interfaces\MisFichajes\" />
+    <None Remove="ViewModels\Interfaces\Fichajes\" />
+    <None Remove="Pages\Fichajes\" />
+    <None Remove="BlazorInputFile" />
+    <None Remove="BlazorDownloadFile" />
+    <None Remove="BitMiracle.Docotic.Pdf" />
+    <None Remove="itext7" />
+    <None Remove="Utils\" />
+    <None Remove="Utils\PDF\" />
+    <None Remove="ViewModels\Classes\Jornadas\" />
+    <None Remove="Microsoft.AspNetCore.SignalR.Client.Core" />
+    <None Remove="Microsoft.AspNetCore.SignalR.Client" />
+    <None Remove="ViewModels\Classes\Chat\" />
+    <None Remove="ViewModels\Interfaces\Chat\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Services\" />
+    <Folder Include="Authentication\" />
+    <Folder Include="Pages\Tickets\" />
+    <Folder Include="Pages\Perfil\" />
+    <Folder Include="Pages\Ajustes\" />
+    <Folder Include="Pages\MisDispositivos\" />
+    <Folder Include="Pages\Agenda\" />
+    <Folder Include="Pages\Usuarios\" />
+    <Folder Include="Pages\Chat\" />
+    <Folder Include="ViewModels\Interfaces\Tickets\" />
+    <Folder Include="ViewModels\Interfaces\Usuario\" />
+    <Folder Include="ViewModels\Interfaces\Agenda\" />
+    <Folder Include="ViewModels\Classes\" />
+    <Folder Include="ViewModels\Classes\Login\" />
+    <Folder Include="ViewModels\Classes\Tickets\" />
+    <Folder Include="ViewModels\Classes\MiUsuario\" />
+    <Folder Include="ViewModels\Classes\Agenda\" />
+    <Folder Include="ViewModels\Interfaces\Login\" />
+    <Folder Include="ViewModels\Interfaces\Usuarios\" />
+    <Folder Include="ViewModels\Classes\Usuarios\" />
+    <Folder Include="wwwroot\fonts\" />
+    <Folder Include="wwwroot\js\" />
+    <Folder Include="ViewModels\Interfaces\Shared\" />
+    <Folder Include="ViewModels\Interfaces\Dispositivos\" />
+    <Folder Include="ViewModels\Classes\MisDispositivos\" />
+    <Folder Include="Pages\Dispositivos\" />
+    <Folder Include="Pages\MisJornadas\" />
+    <Folder Include="ViewModels\Classes\Dispositivos\" />
+    <Folder Include="ViewModels\Interfaces\MisDispositivos\" />
+    <Folder Include="Pages\Shared\" />
+    <Folder Include="ViewModels\Classes\Shared\" />
+    <Folder Include="Pages\Configuración\" />
+    <Folder Include="Pages\MisArchivos\" />
+    <Folder Include="Pages\MiCalendario\" />
+    <Folder Include="ViewModels\Classes\MisJornadas\" />
+    <Folder Include="ViewModels\Interfaces\MisFichajes\" />
+    <Folder Include="ViewModels\Interfaces\Jornadas\" />
+    <Folder Include="Pages\Jornadas\" />
+    <Folder Include="Utils\" />
+    <Folder Include="Utils\PDF\" />
+    <Folder Include="ViewModels\Classes\Jornadas\" />
+    <Folder Include="ViewModels\Classes\Chat\" />
+    <Folder Include="ViewModels\Interfaces\Chat\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\HelpDesk.Shared.csproj">
+      <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Remove="wwwroot\images\" />
+    <Content Remove="wwwroot\fonts\" />
+    <Content Remove="wwwroot\js\" />
+  </ItemGroup>
+</Project>
